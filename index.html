@@ -1258,7 +1258,7 @@ const defaultCourses = [
   { category: "Podstawowy", name: "Psychopatologia", correct: 10, total: 10, testGrade: 5.0, assignmentGrade: 5.0, finalGrade: 5.0, ects: 3 },
   { category: "Specjalność", name: "Zaburzenia osobowości", correct: 10, total: 10, testGrade: 5.0, assignmentGrade: 5.0, finalGrade: 5.0, ects: 6 },
   { category: "Specjalność", name: "Zaburzenia odżywiania się", correct: 10, total: 10, testGrade: 5.0, assignmentGrade: 5.0, finalGrade: 5.0, ects: 6 },
-  { category: "Praktyki", name: "Praktyka zawodowa", correct: 10, total: 10, testGrade: 5.0, assignmentGrade: 5.0, finalGrade: 5.0, ects: 8 }
+  { category: "Praktyki", name: "Praktyka zawodowa", correct: "", total: "", testGrade: "", assignmentGrade: "", finalGrade: "ZAL", ects: 8 }
 ];
 
 let courses = loadSavedCourses() || JSON.parse(JSON.stringify(defaultCourses));
@@ -1269,31 +1269,89 @@ function initIcons() {
   }
 }
 
+function checkAndUpdateRowType(row) {
+  if (!row) return;
+  const cat = (row.querySelector(".input-category")?.value || "").toLowerCase();
+  const name = (row.querySelector(".input-name")?.value || "").toLowerCase();
+  const isPractice = cat.includes("praktyk") || name.includes("praktyk");
+
+  const correctInput = row.querySelector(".input-correct");
+  const totalInput = row.querySelector(".input-total");
+  const testInput = row.querySelector(".input-test-grade");
+  const assignInput = row.querySelector(".input-assignment-grade");
+  const finalGradeEl = row.querySelector(".input-final-grade");
+
+  if (isPractice) {
+    if (correctInput) { correctInput.value = ""; correctInput.placeholder = "-"; correctInput.disabled = true; correctInput.style.opacity = "0.4"; correctInput.style.cursor = "not-allowed"; }
+    if (totalInput) { totalInput.value = ""; totalInput.placeholder = "-"; totalInput.disabled = true; totalInput.style.opacity = "0.4"; totalInput.style.cursor = "not-allowed"; }
+    if (testInput) { testInput.value = ""; testInput.placeholder = "-"; testInput.disabled = true; testInput.style.opacity = "0.4"; testInput.style.cursor = "not-allowed"; }
+    if (assignInput) { assignInput.value = ""; assignInput.placeholder = "-"; assignInput.disabled = true; assignInput.style.opacity = "0.4"; assignInput.style.cursor = "not-allowed"; }
+
+    if (finalGradeEl && finalGradeEl.tagName !== "SELECT") {
+      const currentVal = (finalGradeEl.value || "ZAL").toUpperCase();
+      const select = document.createElement("select");
+      select.className = "input-final-grade text-center";
+      select.onchange = () => { recalculate(); autoSave(); };
+      select.innerHTML = `
+        <option value="ZAL" ${currentVal === "NZAL" ? "" : "selected"}>ZAL</option>
+        <option value="NZAL" ${currentVal === "NZAL" ? "selected" : ""}>NZAL</option>
+      `;
+      finalGradeEl.replaceWith(select);
+    }
+  } else {
+    if (correctInput && correctInput.disabled) { correctInput.disabled = false; correctInput.placeholder = "P"; correctInput.style.opacity = "1"; correctInput.style.cursor = "text"; }
+    if (totalInput && totalInput.disabled) { totalInput.disabled = false; totalInput.placeholder = "M"; totalInput.style.opacity = "1"; totalInput.style.cursor = "text"; }
+    if (testInput && testInput.disabled) { testInput.disabled = false; testInput.placeholder = "np. 4.5"; testInput.style.opacity = "1"; testInput.style.cursor = "text"; }
+    if (assignInput && assignInput.disabled) { assignInput.disabled = false; assignInput.placeholder = "np. 4.0"; assignInput.style.opacity = "1"; assignInput.style.cursor = "text"; }
+
+    if (finalGradeEl && finalGradeEl.tagName === "SELECT") {
+      const input = document.createElement("input");
+      input.type = "text";
+      input.className = "input-final-grade text-center";
+      input.value = "5.0";
+      input.placeholder = "np. 4.5 lub ZAL";
+      input.oninput = () => { recalculate(); autoSave(); };
+      finalGradeEl.replaceWith(input);
+    }
+  }
+}
+
 function createRowHtml(data = {}) {
+  const isPractice = (data.category && data.category.toLowerCase().includes("praktyk")) ||
+                     (data.name && data.name.toLowerCase().includes("praktyk")) ||
+                     data.finalGrade === "ZAL" || data.finalGrade === "NZAL";
+
   const tr = document.createElement("tr");
   tr.className = "course-row";
   tr.innerHTML = `
     <td>
-      <input type="text" class="input-category" value="${escapeHtml(data.category || 'Podstawowy')}" placeholder="np. Specjalność" onchange="autoSave()">
+      <input type="text" class="input-category" value="${escapeHtml(data.category || 'Podstawowy')}" placeholder="np. Specjalność" oninput="checkAndUpdateRowType(this.closest('tr')); autoSave();" onchange="autoSave()">
     </td>
     <td>
-      <textarea class="input-name" rows="1" placeholder="Nazwa modułu" oninput="autoSave(); this.style.height='auto'; this.style.height=(this.scrollHeight)+'px';" onchange="autoSave()">${escapeHtml(data.name || '')}</textarea>
+      <textarea class="input-name" rows="1" placeholder="Nazwa modułu" oninput="checkAndUpdateRowType(this.closest('tr')); autoSave(); this.style.height='auto'; this.style.height=(this.scrollHeight)+'px';" onchange="autoSave()">${escapeHtml(data.name || '')}</textarea>
     </td>
     <td>
       <div class="score-inputs">
-        <input type="number" min="0" class="input-correct" value="${data.correct !== undefined ? data.correct : ''}" placeholder="P" oninput="autoSave()">
+        <input type="number" min="0" class="input-correct" value="${isPractice ? '' : (data.correct !== undefined ? data.correct : '')}" placeholder="${isPractice ? '-' : 'P'}" ${isPractice ? 'disabled style="opacity:0.4;cursor:not-allowed;"' : ''} oninput="autoSave()">
         <span class="score-divider">/</span>
-        <input type="number" min="1" class="input-total" value="${data.total !== undefined ? data.total : ''}" placeholder="M" oninput="autoSave()">
+        <input type="number" min="1" class="input-total" value="${isPractice ? '' : (data.total !== undefined ? data.total : '')}" placeholder="${isPractice ? '-' : 'M'}" ${isPractice ? 'disabled style="opacity:0.4;cursor:not-allowed;"' : ''} oninput="autoSave()">
       </div>
     </td>
     <td>
-      <input type="number" step="0.5" min="2" max="5.5" class="input-test-grade text-center" value="${data.testGrade || ''}" placeholder="np. 4.5" oninput="handleGradeCalc(this)">
+      <input type="number" step="0.5" min="2" max="5.5" class="input-test-grade text-center" value="${isPractice ? '' : (data.testGrade || '')}" placeholder="${isPractice ? '-' : 'np. 4.5'}" ${isPractice ? 'disabled style="opacity:0.4;cursor:not-allowed;"' : ''} oninput="handleGradeCalc(this)">
     </td>
     <td>
-      <input type="number" step="0.5" min="2" max="5.5" class="input-assignment-grade text-center" value="${data.assignmentGrade || ''}" placeholder="np. 4.0" oninput="handleGradeCalc(this)">
+      <input type="number" step="0.5" min="2" max="5.5" class="input-assignment-grade text-center" value="${isPractice ? '' : (data.assignmentGrade || '')}" placeholder="${isPractice ? '-' : 'np. 4.0'}" ${isPractice ? 'disabled style="opacity:0.4;cursor:not-allowed;"' : ''} oninput="handleGradeCalc(this)">
     </td>
     <td>
-      <input type="text" class="input-final-grade text-center" value="${data.finalGrade || ''}" placeholder="np. 4.5 lub ZAL" oninput="recalculate(); autoSave();">
+      ${isPractice ? `
+        <select class="input-final-grade text-center" onchange="recalculate(); autoSave();">
+          <option value="ZAL" ${data.finalGrade === 'NZAL' ? '' : 'selected'}>ZAL</option>
+          <option value="NZAL" ${data.finalGrade === 'NZAL' ? 'selected' : ''}>NZAL</option>
+        </select>
+      ` : `
+        <input type="text" class="input-final-grade text-center" value="${data.finalGrade || ''}" placeholder="np. 4.5 lub ZAL" oninput="recalculate(); autoSave();">
+      `}
     </td>
     <td>
       <input type="number" min="0" step="0.5" class="input-ects text-center" value="${data.ects !== undefined ? data.ects : 0}" oninput="recalculate(); autoSave();">
