@@ -148,7 +148,7 @@
     .summary-val { font-size: 26px; font-weight: 800; color: var(--primary); }
     .summary-label { font-size: 13px; color: var(--text-muted); margin-top: 4px; font-weight: 500; }
 
-    /* Styl kafelka statusu w trybie jasnym - identyczny jak kafelki 33 / 5.00 */
+    /* Styl kafelka statusu w trybie jasnym - identyczny jak kafelki podsumowujące */
     .status-alert.passed,
     .status-alert {
       background: #ffffff !important;               /* Czyste tło jak kafelki */
@@ -170,52 +170,102 @@
     }
 
     .status-alert.conditional {
-      background: var(--warning-bg) !important;
-      border-left: 4px solid var(--warning) !important;
+      background: #ffffff !important;
+      border: 1px solid #e2e8f0 !important;
+      border-left: 4px solid #f59e0b !important;    /* Akcentowa belka bursztynowa */
     }
-    .status-alert.failed {
-      background: var(--danger-bg) !important;
-      border-left: 4px solid var(--danger) !important;
+    [data-theme="dark"] .status-alert.conditional {
+      background: #1e293b !important;
+      border-color: #334155 !important;
+      border-left: 4px solid #f59e0b !important;
     }
 
-    /* Tytuł: Semestr zaliczony w 100% na ten sam niebieski kolor */
+    .status-alert.failed {
+      background: #ffffff !important;
+      border: 1px solid #e2e8f0 !important;
+      border-left: 4px solid #ef4444 !important;    /* Czerwona belka dla braku kwalifikacji */
+    }
+    [data-theme="dark"] .status-alert.failed {
+      background: #1e293b !important;
+      border-color: #334155 !important;
+      border-left: 4px solid #ef4444 !important;
+    }
+
+    /* Tytuł nagłówka kafelka */
     .status-title,
     #statusTitle {
-      color: #0284c7 !important;                    /* Spójny niebieski z wartościami kafelków */
+      color: #0f172a !important;                    /* Ciemny, kontrastowy kolor */
       font-size: 16px !important;
       font-weight: 700 !important;
       display: flex !important;
       align-items: center !important;
       gap: 8px !important;
     }
-
-    /* Zielone kółeczko / ptaszek odhaczenia */
-    .status-title svg,
-    .status-title .icon-check,
-    #statusTitle svg {
-      color: #16a34a !important;                    /* Wyrazista zieleń odhaczenia */
-      stroke: #16a34a !important;
+    [data-theme="dark"] .status-title,
+    [data-theme="dark"] #statusTitle {
+      color: #f8fafc !important;
     }
 
-    /* Głęboki, czytelny czarny kolor tekstu opisu */
+    .status-alert.passed .status-title {
+      color: #0284c7 !important;
+    }
+    [data-theme="dark"] .status-alert.passed .status-title {
+      color: #38bdf8 !important;
+    }
+
+    .status-alert.conditional .status-title {
+      color: #0f172a !important;
+    }
+    [data-theme="dark"] .status-alert.conditional .status-title {
+      color: #f8fafc !important;
+    }
+
+    .status-alert.failed .status-title {
+      color: #0f172a !important;
+    }
+    [data-theme="dark"] .status-alert.failed .status-title {
+      color: #f8fafc !important;
+    }
+
+    .status-title svg {
+      width: 20px !important;
+      height: 20px !important;
+      flex-shrink: 0 !important;
+    }
+
+    .status-alert.passed .status-title svg {
+      color: #16a34a !important;
+      stroke: #16a34a !important;
+    }
+    .status-alert.conditional .status-title svg {
+      color: #f59e0b !important;
+      stroke: #f59e0b !important;
+    }
+    .status-alert.failed .status-title svg {
+      color: #ef4444 !important;
+      stroke: #ef4444 !important;
+    }
+
+    /* Czytelny, neutralny ciemny kolor tekstu opisu */
     .status-desc,
     #statusDesc,
     .status-alert p {
-      color: #0f172a !important;                    /* Klasyczny, kontrastowy czarny/antracyt */
+      color: #334155 !important;                    /* Neutralny ciemny (#334155) */
       font-size: 14px !important;
       font-weight: 500 !important;
       margin: 6px 0 10px 0 !important;
+      line-height: 1.5 !important;
     }
 
     [data-theme="dark"] .status-desc,
     [data-theme="dark"] #statusDesc,
     [data-theme="dark"] .status-alert p {
-      color: #f8fafc !important;
+      color: #cbd5e1 !important;
     }
 
-    /* Pasek postępu pod opisem w tonacji niebieskiej */
+    /* Pasek postępu pod opisem w tonacji niebieskiej na jasnoszarym torze */
     .progress-track {
-      background: #e2e8f0 !important;
+      background: #e2e8f0 !important;               /* Jasnoszary tor #e2e8f0 */
       height: 8px !important;
       border-radius: 4px !important;
       overflow: hidden !important;
@@ -228,10 +278,10 @@
 
     .progress-bar,
     #progressBar {
-      background: #0284c7 !important;               /* Niebieski pasek spójny z kafelkiem */
+      background: #0284c7 !important;               /* Niebieski pasek spójny z kafelkiem #0284c7 */
       height: 100%;
       width: 0%;
-      transition: width 0.3s ease, background-color 0.3s ease;
+      transition: width 0.3s ease;
     }
     .progress-threshold {
       position: absolute;
@@ -1459,25 +1509,25 @@ function recalculate() {
 
   if (totalEcts === 0) {
     alertBox.className = "status-alert conditional";
-    progressBar.style.backgroundColor = "var(--primary)";
-    title.innerHTML = '<i data-lucide="info"></i> Brak przedmiotów';
+    progressBar.style.backgroundColor = "#0284c7";
+    title.innerHTML = '<i data-lucide="info" class="w-5 h-5 text-sky-500 shrink-0"></i> Brak przedmiotów';
     desc.textContent = "Dodaj przedmioty do semestru, aby sprawdzić status kwalifikacji.";
   } else if (earnedEcts === totalEcts) {
     alertBox.className = "status-alert passed";
-    progressBar.style.backgroundColor = "var(--success)";
-    title.innerHTML = '<i data-lucide="check-circle"></i> ✓ Semestr zaliczony w 100%';
+    progressBar.style.backgroundColor = "#0284c7";
+    title.innerHTML = '<i data-lucide="check-circle" class="w-5 h-5 text-emerald-600 shrink-0"></i> Semestr zaliczony w 100%';
     desc.textContent = `Zdobyto pełną pulę ${earnedEcts} z ${totalEcts} ECTS. Gratulacje, brak zaległości punktowych!`;
   } else if (pct >= 75) {
     alertBox.className = "status-alert conditional";
-    progressBar.style.backgroundColor = "var(--warning)";
+    progressBar.style.backgroundColor = "#0284c7";
     const missingFull = totalEcts - earnedEcts;
-    title.innerHTML = '<i data-lucide="alert-triangle"></i> ⚠ Kwalifikacja do wpisu warunkowego (osiągnięto min. 75%)';
+    title.innerHTML = '<i data-lucide="alert-triangle" class="w-5 h-5 text-amber-500 shrink-0"></i> Kwalifikacja do wpisu warunkowego (osiągnięto min. 75%)';
     desc.textContent = `Zdobyłeś ${earnedEcts} ECTS (${pct.toFixed(1)}%). Spełniasz wymóg formalny (min. ${threshold75} ECTS) do złożenia podania o wpis warunkowy na kolejny semestr. Brakuje ${missingFull} ECTS do pełnego rozliczenia.`;
   } else {
     alertBox.className = "status-alert failed";
-    progressBar.style.backgroundColor = "var(--danger)";
+    progressBar.style.backgroundColor = "#0284c7";
     const missingTo75 = threshold75 - earnedEcts;
-    title.innerHTML = '<i data-lucide="x-circle"></i> ✕ Brak kwalifikacji do wpisu warunkowego (< 75%)';
+    title.innerHTML = '<i data-lucide="x-circle" class="w-5 h-5 text-rose-500 shrink-0"></i> Brak kwalifikacji do wpisu warunkowego (< 75%)';
     desc.textContent = `Aktualnie masz ${earnedEcts} ECTS (${pct.toFixed(1)}%). Do progu 75% umożliwiającego wniosek o warunek brakuje Ci jeszcze co najmniej ${missingTo75} ECTS (wymagane min. ${threshold75} z ${totalEcts} ECTS).`;
   }
 
