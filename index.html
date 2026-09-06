@@ -231,7 +231,7 @@
     th { background: var(--bg); color: var(--text-muted); font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.03em; }
     tbody tr:hover { background-color: var(--primary-light); }
 
-    input, select {
+    input, select, textarea {
       width: 100%;
       padding: 7px 10px;
       border: 1px solid var(--border);
@@ -239,12 +239,26 @@
       color: var(--text);
       border-radius: 6px;
       font-size: 13px;
+      font-family: inherit;
       outline: none;
       transition: border-color 0.2s, box-shadow 0.2s;
+      box-sizing: border-box;
     }
-    input:focus, select:focus {
+    input:focus, select:focus, textarea:focus {
       border-color: var(--primary);
       box-shadow: 0 0 0 2px var(--primary-light);
+    }
+
+    textarea.input-name {
+      resize: none;
+      white-space: normal;
+      overflow: hidden;
+      line-height: 1.35;
+      min-height: 32px;
+      max-height: 52px;
+      font-size: 13.5px;
+      font-weight: 600;
+      display: block;
     }
 
     .score-inputs { display: flex; align-items: center; gap: 4px; }
@@ -576,7 +590,7 @@
         margin: 2px 0 6px 0;
       }
 
-      tr.course-row > td:nth-child(2) input.input-name {
+      tr.course-row > td:nth-child(2) .input-name {
         font-size: 14px;
         font-weight: 700;
         color: var(--text);
@@ -585,13 +599,14 @@
         border-radius: 6px;
         background: transparent;
         width: 100%;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
+        min-height: 26px;
+        max-height: 48px;
+        line-height: 1.35;
+        white-space: normal;
         overflow: hidden;
       }
 
-      tr.course-row > td:nth-child(2) input.input-name:focus {
+      tr.course-row > td:nth-child(2) .input-name:focus {
         background: var(--bg);
         border-color: var(--primary);
       }
@@ -1008,7 +1023,7 @@
       }
 
       /* Wymuszenie czystego tekstu zamiast pól formularza */
-      input, select {
+      input, select, textarea {
         border: none !important;
         background: transparent !important;
         padding: 0 !important;
@@ -1016,6 +1031,8 @@
         font-size: inherit !important;
         font-weight: 500 !important;
         box-shadow: none !important;
+        resize: none !important;
+        white-space: normal !important;
       }
     }
   </style>
@@ -1241,7 +1258,7 @@ function createRowHtml(data = {}) {
       <input type="text" class="input-category" value="${escapeHtml(data.category || 'Podstawowy')}" placeholder="np. Specjalność" onchange="autoSave()">
     </td>
     <td>
-      <input type="text" class="input-name" value="${escapeHtml(data.name || '')}" placeholder="Nazwa modułu" onchange="autoSave()">
+      <textarea class="input-name" rows="1" placeholder="Nazwa modułu" oninput="autoSave(); this.style.height='auto'; this.style.height=(this.scrollHeight)+'px';" onchange="autoSave()">${escapeHtml(data.name || '')}</textarea>
     </td>
     <td>
       <div class="score-inputs">
