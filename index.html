@@ -415,9 +415,60 @@
     [data-theme="dark"] .btn-help-link {
       color: #94a3b8;
     }
-    [data-theme="dark"] .btn-help-link:hover {
-      color: #f8fafc;
-      background-color: #334155;
+    /* Szybki kalkulator stypendium */
+    .simulator-box {
+      margin-top: 24px;
+      padding: 16px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .simulator-disclaimer {
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px dashed var(--border);
+      font-size: 11.5px;
+      line-height: 1.5;
+      font-weight: 400;
+      color: #64748b;
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+    }
+
+    [data-theme="dark"] .simulator-disclaimer {
+      color: #94a3b8;
+      border-top-color: #334155;
+    }
+
+    .simulator-disclaimer svg,
+    .simulator-disclaimer i {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+      margin-top: 1.5px;
+      color: #0284c7;
+    }
+
+    .simulator-disclaimer a {
+      color: #0284c7;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      font-weight: 500;
+      transition: color 0.15s ease;
+    }
+
+    .simulator-disclaimer a:hover {
+      color: #0369a1;
+    }
+
+    [data-theme="dark"] .simulator-disclaimer a {
+      color: #38bdf8;
+    }
+
+    [data-theme="dark"] .simulator-disclaimer a:hover {
+      color: #7dd3fc;
     }
 
     /* Modal ECTS Info */
@@ -1222,7 +1273,7 @@
 
     <!-- Szybki kalkulator stypendium -->
     <div class="simulator-box">
-      <div>
+      <div style="margin-bottom: 8px;">
         <strong style="font-size: 14px;">Symulator celu stypendialnego:</strong>
         <p style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-muted);">
           Podaj docelową średnią i pozostałe ECTS, aby sprawdzić wymaganą ocenę:
@@ -1233,6 +1284,10 @@
         <label style="font-size: 13px;">Brakujące ECTS: <input type="number" id="simEcts" value="10" min="1" max="60" style="width: 55px; text-align: center;"></label>
         <button class="btn btn-secondary" onclick="calculateTarget()">Oblicz</button>
         <span id="simResult" style="font-size: 13px; font-weight: 700; color: var(--primary);"></span>
+      </div>
+      <div class="simulator-disclaimer">
+        <i data-lucide="info" class="w-3.5 h-3.5 inline mr-1 shrink-0"></i>
+        <span>Symulator ma charakter wyłącznie pomocniczy i orientacyjny. Uzyskanie określonej średniej nie gwarantuje przyznania świadczenia. Stypendium Rektora przyznawane jest na podstawie listy rankingowej (do 10% najlepszych studentów kierunku) zgodnie z aktualnym Regulaminem świadczeń dla studentów WSKZ. Szczegółowe zasady i kryteria formalne weryfikuj zawsze w <a href="https://wskz.pl/bip" target="_blank" rel="noopener noreferrer">Biuletynie Informacji Publicznej (BIP) WSKZ</a>.</span>
       </div>
     </div>
 
