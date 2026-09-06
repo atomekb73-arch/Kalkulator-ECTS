@@ -362,6 +362,99 @@
     .score-inputs input { width: 52px; text-align: center; }
     .score-divider { color: var(--text-muted); font-weight: bold; }
 
+    .category-cell-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .toggle-include-semester {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      color: var(--text-muted);
+      cursor: pointer;
+      user-select: none;
+      font-weight: 500;
+      margin-top: 1px;
+    }
+
+    .toggle-include-semester input[type="checkbox"] {
+      width: 13px !important;
+      height: 13px !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      cursor: pointer;
+      accent-color: var(--primary);
+    }
+
+    .toggle-include-semester:hover {
+      color: var(--text);
+    }
+
+    .badge-extra-course {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 10px;
+      font-weight: 600;
+      color: #0284c7;
+      background-color: rgba(2, 132, 199, 0.1);
+      border: 1px solid rgba(2, 132, 199, 0.25);
+      padding: 2px 6px;
+      border-radius: 4px;
+      width: fit-content;
+      line-height: 1.2;
+      margin-top: 2px;
+    }
+
+    [data-theme="dark"] .badge-extra-course {
+      color: #38bdf8;
+      background-color: rgba(56, 189, 248, 0.15);
+      border-color: rgba(56, 189, 248, 0.3);
+    }
+
+    .row-extra-course {
+      background-color: rgba(241, 245, 249, 0.55);
+    }
+
+    [data-theme="dark"] .row-extra-course {
+      background-color: rgba(30, 41, 59, 0.45);
+    }
+
+    .summary-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      font-weight: 500;
+      line-height: 1.3;
+    }
+
+    [data-theme="dark"] .summary-sub {
+      color: #94a3b8;
+    }
+
+    .table-hint-box {
+      margin-top: 12px;
+      padding: 10px 14px;
+      background: rgba(240, 249, 255, 0.85);
+      border: 1px solid #bae6fd;
+      border-radius: 8px;
+      font-size: 12.5px;
+      line-height: 1.5;
+      color: #0369a1;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    [data-theme="dark"] .table-hint-box {
+      background: rgba(8, 47, 73, 0.35);
+      border-color: rgba(7, 89, 133, 0.6);
+      color: #7dd3fc;
+    }
+
     .actions-bar {
       display: flex;
       justify-content: space-between;
@@ -850,7 +943,9 @@
         grid-column: 1 / 5;
         grid-row: 1;
         display: flex;
-        align-items: center;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 3px;
       }
 
       tr.course-row > td:nth-child(1) input.input-category {
@@ -1116,6 +1211,8 @@
       .theme-toggle,
       .simulator-box,
       .simulator-disclaimer,
+      .table-hint-box,
+      .toggle-include-semester,
       .print-hidden,
       [print-hidden],
       footer,
@@ -1372,10 +1469,12 @@
       <div class="summary-card">
         <div class="summary-val" id="sumEarnedEcts">0</div>
         <div class="summary-label">Aktualnie zdobyte ECTS</div>
+        <div class="summary-sub" id="sumEarnedEctsSub" style="display: none;"></div>
       </div>
       <div class="summary-card">
         <div class="summary-val" id="sumTotalEcts">0</div>
         <div class="summary-label">Łączna suma ECTS w semestrze</div>
+        <div class="summary-sub" id="sumTotalEctsSub" style="display: none;"></div>
       </div>
       <div class="summary-card">
         <div class="summary-val" id="ectsPercentage">0%</div>
@@ -1404,8 +1503,8 @@
       <table>
         <thead>
           <tr>
-            <th style="width: 14%;">Kategoria / Typ</th>
-            <th style="width: 23%;">Nazwa przedmiotu</th>
+            <th style="width: 17%;">Kategoria / Typ</th>
+            <th style="width: 20%;">Nazwa przedmiotu</th>
             <th style="width: 13%; text-align: center;">Poprawne odp.</th>
             <th style="width: 10%; text-align: center;">Ocena test</th>
             <th style="width: 11%; text-align: center;">Praca zalicz.</th>
@@ -1426,6 +1525,12 @@
       <small style="color: var(--text-muted); display: flex; align-items: center; gap: 4px;">
         <i data-lucide="info" style="width: 14px; height: 14px;"></i> Wpis warunkowy wymaga zdobycia minimum 75% łącznej puli ECTS w semestrze.
       </small>
+    </div>
+
+    <!-- Wskazówka dotycząca dodatkowych specjalności i bilansu semestru -->
+    <div class="table-hint-box print-hidden">
+      <i data-lucide="info" class="w-4 h-4 shrink-0 text-sky-600 dark:text-sky-400 mt-0.5" style="width: 16px; height: 16px;"></i>
+      <span><strong>Wskazówka:</strong> Jeśli realizujesz dodatkową specjalność i jej moduły rozliczasz w późniejszym terminie, możesz odznaczyć ich wliczanie do bieżącego semestru, aby nie zawyżały wymaganego progu 75% do wpisu warunkowego.</span>
     </div>
 
     <!-- Szybki kalkulator stypendium -->
@@ -1560,13 +1665,13 @@
 <script>
 // Startowy zestaw danych (Semestr IV Psychologia - zaktualizowany)
 const defaultCourses = [
-  { category: "Podstawowy", name: "Krytyczna analiza tekstów naukowych", correct: 10, total: 10, testGrade: 5.0, assignmentGrade: 5.0, finalGrade: 5.0, ects: 2 },
-  { category: "Podstawowy", name: "Psychologia eksperymentalna", correct: 10, total: 10, testGrade: 5.0, assignmentGrade: 5.0, finalGrade: 5.0, ects: 3 },
-  { category: "Podstawowy", name: "Umiejętności psychologiczne", correct: 10, total: 10, testGrade: 5.0, assignmentGrade: 5.0, finalGrade: 5.0, ects: 5 },
-  { category: "Podstawowy", name: "Psychopatologia", correct: 10, total: 10, testGrade: 5.0, assignmentGrade: 5.0, finalGrade: 5.0, ects: 3 },
-  { category: "Specjalność", name: "Zaburzenia osobowości", correct: 10, total: 10, testGrade: 5.0, assignmentGrade: 5.0, finalGrade: 5.0, ects: 6 },
-  { category: "Specjalność", name: "Zaburzenia odżywiania się", correct: 10, total: 10, testGrade: 5.0, assignmentGrade: 5.0, finalGrade: 5.0, ects: 6 },
-  { category: "Praktyki", name: "Praktyka zawodowa", correct: "", total: "", testGrade: "", assignmentGrade: "", finalGrade: "ZAL", ects: 8 }
+  { category: "Podstawowy", name: "Krytyczna analiza tekstów naukowych", correct: 10, total: 10, testGrade: 5.0, assignmentGrade: 5.0, finalGrade: 5.0, ects: 2, includeInSemester: true },
+  { category: "Podstawowy", name: "Psychologia eksperymentalna", correct: 10, total: 10, testGrade: 5.0, assignmentGrade: 5.0, finalGrade: 5.0, ects: 3, includeInSemester: true },
+  { category: "Podstawowy", name: "Umiejętności psychologiczne", correct: 10, total: 10, testGrade: 5.0, assignmentGrade: 5.0, finalGrade: 5.0, ects: 5, includeInSemester: true },
+  { category: "Podstawowy", name: "Psychopatologia", correct: 10, total: 10, testGrade: 5.0, assignmentGrade: 5.0, finalGrade: 5.0, ects: 3, includeInSemester: true },
+  { category: "Specjalność", name: "Zaburzenia osobowości", correct: 10, total: 10, testGrade: 5.0, assignmentGrade: 5.0, finalGrade: 5.0, ects: 6, includeInSemester: true },
+  { category: "Specjalność", name: "Zaburzenia odżywiania się", correct: 10, total: 10, testGrade: 5.0, assignmentGrade: 5.0, finalGrade: 5.0, ects: 6, includeInSemester: true },
+  { category: "Praktyki", name: "Praktyka zawodowa", correct: "", total: "", testGrade: "", assignmentGrade: "", finalGrade: "ZAL", ects: 8, includeInSemester: true }
 ];
 
 let courses = loadSavedCourses() || JSON.parse(JSON.stringify(defaultCourses));
@@ -1624,16 +1729,44 @@ function checkAndUpdateRowType(row) {
   }
 }
 
+function handleIncludeSemesterToggle(checkbox) {
+  const row = checkbox.closest("tr");
+  const badge = row.querySelector(".badge-extra-course");
+  if (checkbox.checked) {
+    row.classList.remove("row-extra-course");
+    if (badge) badge.style.display = "none";
+  } else {
+    row.classList.add("row-extra-course");
+    if (badge) {
+      badge.style.display = "inline-flex";
+      initIcons();
+    }
+  }
+  recalculate();
+  autoSave();
+}
+
 function createRowHtml(data = {}) {
   const isPractice = (data.category && data.category.toLowerCase().includes("praktyk")) ||
                      (data.name && data.name.toLowerCase().includes("praktyk")) ||
                      data.finalGrade === "ZAL" || data.finalGrade === "NZAL";
+  const includeInSem = data.includeInSemester !== false;
 
   const tr = document.createElement("tr");
-  tr.className = "course-row";
+  tr.className = "course-row" + (!includeInSem ? " row-extra-course" : "");
   tr.innerHTML = `
     <td>
-      <input type="text" class="input-category" value="${escapeHtml(data.category || 'Podstawowy')}" placeholder="np. Specjalność" oninput="checkAndUpdateRowType(this.closest('tr')); autoSave();" onchange="autoSave()">
+      <div class="category-cell-wrapper">
+        <input type="text" class="input-category" value="${escapeHtml(data.category || 'Podstawowy')}" placeholder="np. Specjalność" oninput="checkAndUpdateRowType(this.closest('tr')); autoSave();" onchange="autoSave()">
+        <label class="toggle-include-semester" title="Wliczaj ten przedmiot do bilansu i wymogu 75% bieżącego semestru">
+          <input type="checkbox" class="input-include-sem" ${includeInSem ? 'checked' : ''} onchange="handleIncludeSemesterToggle(this)">
+          <span class="toggle-label-text">Wliczaj do bilansu semestru</span>
+        </label>
+        <div class="badge-extra-course" style="display: ${!includeInSem ? 'inline-flex' : 'none'};">
+          <i data-lucide="info" class="w-3 h-3 inline" style="width: 11px; height: 11px;"></i>
+          <span>Przedmiot ponadprogramowy / pozasemestralny</span>
+        </div>
+      </div>
     </td>
     <td>
       <textarea class="input-name" rows="1" placeholder="Nazwa modułu" oninput="checkAndUpdateRowType(this.closest('tr')); autoSave(); this.style.height='auto'; this.style.height=(this.scrollHeight)+'px';" onchange="autoSave()">${escapeHtml(data.name || '')}</textarea>
@@ -1681,7 +1814,7 @@ function renderTable() {
 
 function addRow() {
   const tbody = document.getElementById("courseTableBody");
-  const newRow = createRowHtml({ category: "Przedmiot", name: "", ects: 3, finalGrade: "5.0" });
+  const newRow = createRowHtml({ category: "Przedmiot", name: "", ects: 3, finalGrade: "5.0", includeInSemester: true });
   tbody.appendChild(newRow);
   recalculate();
   autoSave();
@@ -1721,8 +1854,10 @@ function handleGradeCalc(element) {
 
 function recalculate() {
   const rows = document.querySelectorAll(".course-row");
-  let totalEcts = 0;
-  let earnedEcts = 0;
+  let baseTotalEcts = 0;       // ECTS wymagane w bieżącym semestrze (includeInSemester === true)
+  let baseEarnedEcts = 0;      // ECTS zdobyte w bieżącym semestrze
+  let extraTotalEcts = 0;      // ECTS z dodatkowych specjalności / pozasemestralne
+  let extraEarnedEcts = 0;     // ECTS zdobyte z dodatkowych specjalności
   let weightedGradeSum = 0;
   let gradedEctsSum = 0;
 
@@ -1732,31 +1867,63 @@ function recalculate() {
     const name = (row.querySelector(".input-name")?.value || "").trim().toLowerCase();
     const finalGradeStr = (row.querySelector(".input-final-grade").value || "").trim().toUpperCase();
     const finalGradeNum = parseFloat(finalGradeStr.replace(",", "."));
+    const includeInSem = row.querySelector(".input-include-sem") ? row.querySelector(".input-include-sem").checked : true;
 
     const isPractice = cat === "praktyki" || cat.includes("praktyk") || name.includes("praktyk");
-
-    totalEcts += ects;
-
     const isPassedNum = !isNaN(finalGradeNum) && finalGradeNum >= 3.0;
     const isPassedText = finalGradeStr === "ZAL" || finalGradeStr === "ZALICZONE";
+    const isPassed = isPassedNum || isPassedText;
 
-    // Do puli zdobytych ECTS wliczamy każdy zaliczony przedmiot (w tym praktyki)
-    if (isPassedNum || isPassedText) {
-      earnedEcts += ects;
+    if (includeInSem) {
+      baseTotalEcts += ects;
+      if (isPassed) {
+        baseEarnedEcts += ects;
+      }
+    } else {
+      extraTotalEcts += ects;
+      if (isPassed) {
+        extraEarnedEcts += ects;
+      }
     }
 
-    // Do średniej ocen wliczamy TYLKO przedmioty, które NIE są praktykami i mają ocenę numeryczną
+    // Do średniej ocen wliczamy przedmioty z oceną numeryczną (z wyłączeniem praktyk)
     if (isPassedNum && !isPractice && ects > 0) {
       weightedGradeSum += finalGradeNum * ects;
       gradedEctsSum += ects;
     }
   });
 
-  // Wskaźniki
-  document.getElementById("sumTotalEcts").textContent = totalEcts;
-  document.getElementById("sumEarnedEcts").textContent = earnedEcts;
+  const allTotalEcts = baseTotalEcts + extraTotalEcts;
+  const allEarnedEcts = baseEarnedEcts + extraEarnedEcts;
 
-  const pct = totalEcts > 0 ? (earnedEcts / totalEcts) * 100 : 0;
+  // 1. Kafelek zdobytych ECTS
+  document.getElementById("sumEarnedEcts").textContent = baseEarnedEcts;
+  const earnedSubEl = document.getElementById("sumEarnedEctsSub");
+  if (earnedSubEl) {
+    if (extraEarnedEcts > 0) {
+      earnedSubEl.style.display = "block";
+      earnedSubEl.textContent = `+ ${extraEarnedEcts} ECTS zaliczone poza bilansem (łącznie: ${allEarnedEcts} ECTS)`;
+    } else {
+      earnedSubEl.style.display = "none";
+      earnedSubEl.textContent = "";
+    }
+  }
+
+  // 2. Kafelek łącznej sumy ECTS
+  document.getElementById("sumTotalEcts").textContent = baseTotalEcts;
+  const totalSubEl = document.getElementById("sumTotalEctsSub");
+  if (totalSubEl) {
+    if (extraTotalEcts > 0) {
+      totalSubEl.style.display = "block";
+      totalSubEl.textContent = `+ ${extraTotalEcts} ECTS z dodatkowych specjalności (łącznie w toku: ${allTotalEcts} ECTS)`;
+    } else {
+      totalSubEl.style.display = "none";
+      totalSubEl.textContent = "";
+    }
+  }
+
+  // 3. Procent realizacji i próg 75% liczony w oparciu o bazowy program semestru
+  const pct = baseTotalEcts > 0 ? (baseEarnedEcts / baseTotalEcts) * 100 : 0;
   document.getElementById("ectsPercentage").textContent = `${pct.toFixed(1)}%`;
 
   const avg = gradedEctsSum > 0 ? (weightedGradeSum / gradedEctsSum).toFixed(2) : "-";
@@ -1770,30 +1937,35 @@ function recalculate() {
 
   progressBar.style.width = `${Math.min(pct, 100)}%`;
 
-  const threshold75 = Math.ceil(totalEcts * 0.75);
+  const threshold75 = Math.ceil(baseTotalEcts * 0.75);
 
-  if (totalEcts === 0) {
+  if (baseTotalEcts === 0) {
     alertBox.className = "status-alert conditional";
     progressBar.style.backgroundColor = "#0284c7";
-    title.innerHTML = '<i data-lucide="info" class="w-5 h-5 text-sky-500 shrink-0"></i> Brak przedmiotów';
-    desc.textContent = "Dodaj przedmioty do semestru, aby sprawdzić status kwalifikacji.";
-  } else if (earnedEcts === totalEcts) {
+    title.innerHTML = '<i data-lucide="info" class="w-5 h-5 text-sky-500 shrink-0"></i> Brak przedmiotów w bilansie semestru';
+    desc.textContent = extraTotalEcts > 0 
+      ? `Wszystkie wprowadzone przedmioty (${extraTotalEcts} ECTS) są oznaczone jako ponadprogramowe. Zaznacz przynajmniej jeden moduł do bilansu semestru.`
+      : "Dodaj przedmioty do semestru, aby sprawdzić status kwalifikacji.";
+  } else if (baseEarnedEcts === baseTotalEcts) {
     alertBox.className = "status-alert passed";
     progressBar.style.backgroundColor = "#0284c7";
     title.innerHTML = '<i data-lucide="check-circle" class="w-5 h-5 text-emerald-600 shrink-0"></i> Semestr zaliczony w 100%';
-    desc.textContent = `Zdobyto pełną pulę ${earnedEcts} z ${totalEcts} ECTS. Gratulacje, brak zaległości punktowych!`;
+    let extraMsg = extraTotalEcts > 0 ? ` (Poza bilansem: ${extraEarnedEcts}/${extraTotalEcts} ECTS z dodatkowych modułów).` : "";
+    desc.textContent = `Zdobyto pełną pulę ${baseEarnedEcts} z ${baseTotalEcts} ECTS w bieżącym semestrze. Gratulacje, brak zaległości punktowych!${extraMsg}`;
   } else if (pct >= 75) {
     alertBox.className = "status-alert conditional";
     progressBar.style.backgroundColor = "#0284c7";
-    const missingFull = totalEcts - earnedEcts;
+    const missingFull = baseTotalEcts - baseEarnedEcts;
     title.innerHTML = '<i data-lucide="alert-triangle" class="w-5 h-5 text-amber-500 shrink-0"></i> Kwalifikacja do wpisu warunkowego (osiągnięto min. 75%)';
-    desc.textContent = `Zdobyłeś ${earnedEcts} ECTS (${pct.toFixed(1)}%). Spełniasz wymóg formalny (min. ${threshold75} ECTS) do złożenia podania o wpis warunkowy na kolejny semestr. Brakuje ${missingFull} ECTS do pełnego rozliczenia.`;
+    let extraMsg = extraTotalEcts > 0 ? ` Dodatkowa specjalność (${extraTotalEcts} ECTS) nie zawyża Twojego progu zaliczenia.` : "";
+    desc.textContent = `Zdobyłeś ${baseEarnedEcts} z ${baseTotalEcts} ECTS (${pct.toFixed(1)}%). Spełniasz wymóg formalny (min. ${threshold75} ECTS) do złożenia podania o wpis warunkowy na kolejny semestr. Brakuje ${missingFull} ECTS do pełnego rozliczenia.${extraMsg}`;
   } else {
     alertBox.className = "status-alert failed";
     progressBar.style.backgroundColor = "#0284c7";
-    const missingTo75 = threshold75 - earnedEcts;
+    const missingTo75 = threshold75 - baseEarnedEcts;
     title.innerHTML = '<i data-lucide="x-circle" class="w-5 h-5 text-rose-500 shrink-0"></i> Brak kwalifikacji do wpisu warunkowego (< 75%)';
-    desc.textContent = `Aktualnie masz ${earnedEcts} ECTS (${pct.toFixed(1)}%). Do progu 75% umożliwiającego wniosek o warunek brakuje Ci jeszcze co najmniej ${missingTo75} ECTS (wymagane min. ${threshold75} z ${totalEcts} ECTS).`;
+    let extraMsg = extraTotalEcts > 0 ? ` (Bilans liczony wyłącznie z bazowych ${baseTotalEcts} ECTS; moduły dodatkowe nie wpływają na ten próg).` : "";
+    desc.textContent = `Aktualnie masz ${baseEarnedEcts} z ${baseTotalEcts} ECTS (${pct.toFixed(1)}%). Do progu 75% umożliwiającego wniosek o warunek brakuje Ci jeszcze co najmniej ${missingTo75} ECTS (wymagane min. ${threshold75} z ${baseTotalEcts} ECTS).${extraMsg}`;
   }
 
   initIcons();
@@ -1929,7 +2101,8 @@ function autoSave() {
       testGrade: row.querySelector(".input-test-grade").value,
       assignmentGrade: row.querySelector(".input-assignment-grade").value,
       finalGrade: row.querySelector(".input-final-grade").value,
-      ects: parseFloat(row.querySelector(".input-ects").value) || 0
+      ects: parseFloat(row.querySelector(".input-ects").value) || 0,
+      includeInSemester: row.querySelector(".input-include-sem") ? row.querySelector(".input-include-sem").checked : true
     });
   });
   localStorage.setItem("kalkulator_warunek_data", JSON.stringify(data));

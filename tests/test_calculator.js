@@ -92,4 +92,18 @@ assert(practiceStats.totalEcts === 18, `Total ECTS with practice is 18 (got ${pr
 assert(practiceStats.earnedEcts === 18, `Earned ECTS with practice is 18 (got ${practiceStats.earnedEcts})`);
 assert(practiceStats.weightedAverage === 4.5, `Weighted average correctly excludes practice (got ${practiceStats.weightedAverage}, expected 4.5)`);
 
+console.log('\n--- TEST 7: Dodatkowe specjalności i przedmioty pozasemestralne ---');
+const subjectsWithExtra = [
+  { category: 'Podstawowy', name: 'Neuropsychologia', ects: 6, grade: '5.0', includeInSemester: true },
+  { category: 'Podstawowy', name: 'Psychometria', ects: 5, grade: '4.0', includeInSemester: true },
+  { category: 'Specjalność 2', name: 'Psychologia transportu (dodatkowa)', ects: 6, grade: '5.0', includeInSemester: false }
+];
+const extraStats = calculateSemesterStats(subjectsWithExtra, 30);
+assert(extraStats.totalEcts === 11, `Base semester total ECTS is 11 (got ${extraStats.totalEcts})`);
+assert(extraStats.earnedEcts === 11, `Base semester earned ECTS is 11 (got ${extraStats.earnedEcts})`);
+assert(extraStats.extraEcts === 6, `Extra specialization ECTS is 6 (got ${extraStats.extraEcts})`);
+assert(extraStats.extraEarnedEcts === 6, `Extra earned ECTS is 6 (got ${extraStats.extraEarnedEcts})`);
+assert(extraStats.allTotalEcts === 17, `All total ECTS is 17 (got ${extraStats.allTotalEcts})`);
+assert(extraStats.allEarnedEcts === 17, `All earned ECTS is 17 (got ${extraStats.allEarnedEcts})`);
+
 console.log('\n🎉 ALL CALCULATOR & PARSER TESTS PASSED SUCCESSFULLY!');

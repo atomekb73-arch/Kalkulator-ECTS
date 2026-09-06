@@ -41,15 +41,18 @@ export function getGradeInfo(gradeValue) {
 
 /**
  * Oblicza statystyki dla pojedynczego semestru lub listy przedmiotów
- * @param {Array} subjects - Lista obiektów { name, ects, grade, countInAverage }
+ * @param {Array} subjects - Lista obiektów { name, ects, grade, countInAverage, includeInSemester }
  * @param {number} nominalEcts - Wymagana nominalna liczba ECTS (domyślnie 30)
  */
 export function calculateSemesterStats(subjects = [], nominalEcts = 30) {
-  let totalEcts = 0;           // Całkowita liczba zadeklarowanych ECTS
-  let earnedEcts = 0;          // Zdobyte punkty ECTS (zaliczone: ocena >= 3.0 lub ZAL)
-  let failedEcts = 0;          // Niezaliczone punkty ECTS (ocena 2.0 lub NZAL)
-  let pendingEcts = 0;         // Przedmioty w toku (brak oceny)
+  let totalEcts = 0;           // Całkowita liczba zadeklarowanych ECTS wliczanych do bilansu semestru
+  let earnedEcts = 0;          // Zdobyte punkty ECTS (zaliczone: ocena >= 3.0 lub ZAL) w semestrze
+  let failedEcts = 0;          // Niezaliczone punkty ECTS w semestrze (ocena 2.0 lub NZAL)
+  let pendingEcts = 0;         // Przedmioty w toku (brak oceny) w semestrze
   
+  let extraEcts = 0;           // Punkty ECTS z przedmiotów ponadprogramowych / dodatkowych specjalności
+  let extraEarnedEcts = 0;     // Zdobyte punkty ECTS z przedmiotów ponadprogramowych
+
   let weightedSum = 0;         // Suma (ocena * ects) dla przedmiotów liczonych do średniej
   let weightedEctsSum = 0;     // Suma ECTS dla przedmiotów liczonych do średniej
   
@@ -76,19 +79,26 @@ export function calculateSemesterStats(subjects = [], nominalEcts = 30) {
       (sub.category && (sub.category.trim().toLowerCase() === "praktyki" || sub.category.trim().toLowerCase().includes("praktyk"))) ||
       (sub.name && sub.name.toLowerCase().includes("praktyk"));
     const countInAvg = sub.countInAverage !== false && !isPractice; // Domyślnie wliczany do średniej, o ile nie jest praktyką
+    const includeInSem = sub.includeInSemester !== false && sub.countInSemester !== false; // Domyślnie wliczany do bilansu semestru
 
-    totalEcts += ects;
+    if (includeInSem) {
+      totalEcts += ects;
+      if (gradeInfo.isPassing === true) {
+        earnedEcts += ects;
+      } else if (gradeInfo.isPassing === false) {
+        failedEcts += ects;
+      } else {
+        pendingEcts += ects;
+      }
+    } else {
+      extraEcts += ects;
+      if (gradeInfo.isPassing === true) {
+        extraEarnedEcts += ects;
+      }
+    }
 
     if (gradeInfo.value in gradeDistribution) {
       gradeDistribution[gradeInfo.value]++;
-    }
-
-    if (gradeInfo.isPassing === true) {
-      earnedEcts += ects;
-    } else if (gradeInfo.isPassing === false) {
-      failedEcts += ects;
-    } else {
-      pendingEcts += ects;
     }
 
     // Obliczanie średniej (tylko oceny numeryczne i włączone do średniej, z wykluczeniem praktyk)
@@ -109,6 +119,10 @@ export function calculateSemesterStats(subjects = [], nominalEcts = 30) {
     earnedEcts,
     failedEcts,
     pendingEcts,
+    extraEcts,
+    extraEarnedEcts,
+    allTotalEcts: totalEcts + extraEcts,
+    allEarnedEcts: earnedEcts + extraEarnedEcts,
     weightedSum,
     weightedEctsSum,
     weightedAverage: weightedAverage !== null ? Number(weightedAverage.toFixed(3)) : null,
