@@ -1775,13 +1775,20 @@ function calculateTarget() {
   if (requiredAvg > 5.0) {
     resEl.textContent = "Cel nieosiągalny (wymagana średnia przekracza 5.00).";
     resEl.style.color = "var(--danger)";
+  } else if (requiredAvg < 3.0) {
+    if (currAvg !== null) {
+      resEl.textContent = `Masz bardzo bezpieczny zapas punktowy! Przy Twojej obecnej średniej (${currAvg.toFixed(2)}), aby na koniec utrzymać cel ${targetAvg.toFixed(2)}, wystarczy po prostu zaliczyć pozostałe ${remEcts} ECTS na minimalną ocenę pozytywną (3.0).`;
+    } else {
+      resEl.textContent = `Aby osiągnąć cel ${targetAvg.toFixed(2)}, wystarczy po prostu zaliczyć pozostałe ${remEcts} ECTS na minimalną ocenę pozytywną (3.0).`;
+    }
+    resEl.style.color = "var(--success)";
   } else if (currAvg !== null && requiredAvg < currAvg) {
-    const minGradeText = Math.max(2.0, requiredAvg).toFixed(2);
-    resEl.textContent = `Masz zapas punktowy! Przy Twojej obecnej średniej (${currAvg.toFixed(2)}), aby na koniec utrzymać cel ${targetAvg.toFixed(2)}, z pozostałych ${remEcts} ECTS wystarczy uzyskać średnią min. ${minGradeText}.`;
+    const finalRequired = Math.max(3.0, Math.min(5.0, requiredAvg));
+    resEl.textContent = `Masz zapas punktowy! Przy Twojej obecnej średniej (${currAvg.toFixed(2)}), aby na koniec utrzymać cel ${targetAvg.toFixed(2)}, z pozostałych ${remEcts} ECTS wystarczy uzyskać średnią min. ${finalRequired.toFixed(2)}.`;
     resEl.style.color = "var(--success)";
   } else {
-    const minGradeText = Math.max(2.0, requiredAvg).toFixed(2);
-    resEl.textContent = `Aby osiągnąć cel ${targetAvg.toFixed(2)}, z pozostałych ${remEcts} ECTS musisz uzyskać średnią min. ${minGradeText}.`;
+    const finalRequired = Math.max(3.0, Math.min(5.0, requiredAvg));
+    resEl.textContent = `Aby osiągnąć cel ${targetAvg.toFixed(2)}, z pozostałych ${remEcts} ECTS musisz uzyskać średnią min. ${finalRequired.toFixed(2)}.`;
     resEl.style.color = "var(--primary)";
   }
 }
