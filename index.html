@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kalkulator ECTS, Ocen i Warunków</title>
+  <meta name="description" content="Kalkulator semestralny ECTS, ocen cząstkowych, średniej ważonej oraz kwalifikacji do wpisu warunkowego (próg 75% ECTS).">
+  <!-- Lucide Icons & Chart.js -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --primary: #0284c7;
+      --primary-hover: #0369a1;
+      --primary-light: rgba(2, 132, 199, 0.12);
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --border: #e2e8f0;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --success: #16a34a;
+      --success-bg: #dcfce7;
+      --warning: #d97706;
+      --warning-bg: #fef3c7;
+      --danger: #dc2626;
+      --danger-bg: #fee2e2;
+    }
+
+    [data-theme="dark"] {
+      --primary: #38bdf8;
+      --primary-hover: #0ea5e9;
+      --primary-light: rgba(56, 189, 248, 0.15);
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --border: #334155;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --success: #4ade80;
+      --success-bg: rgba(22, 163, 74, 0.22);
+      --warning: #fbbf24;
+      --warning-bg: rgba(217, 119, 6, 0.22);
+      --danger: #f87171;
+      --danger-bg: rgba(220, 38, 38, 0.22);
+    }
+
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); padding: 24px 16px; margin: 0; min-height: 100vh; transition: background-color 0.2s ease, color 0.2s ease; }
+    .container { max-width: 1150px; margin: 0 auto; }
+
+    .header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .header-title-group {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .header-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      background-color: transparent;
+      border: 1px solid #e2e8f0; /* border-slate-200 */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      flex-shrink: 0;
+      overflow: hidden;
+      transition: border-color 0.2s ease;
+    }
+
+    [data-theme="dark"] .header-icon {
+      border-color: #1e293b; /* dark:border-slate-800 */
+    }
+
+    .header-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      transform: scale(1.45);
+      display: block;
+      pointer-events: none;
+    }
+
+    h1 { font-size: 24px; margin: 0; color: var(--text); }
+    p.subtitle { margin: 2px 0 0 0; font-size: 13px; color: var(--text-muted); }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 14px;
+      padding: 24px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+      border: 1px solid var(--border);
+      margin-bottom: 24px;
+    }
+
+    /* Kafelki podsumowujące */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .summary-card {
+      background: var(--bg);
+      padding: 16px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--primary);
+      transition: transform 0.15s ease;
+    }
+    .summary-card:hover { transform: translateY(-2px); }
+
+    .summary-val { font-size: 26px; font-weight: 800; color: var(--primary); }
+    .summary-label { font-size: 13px; color: var(--text-muted); margin-top: 4px; font-weight: 500; }
+
+    /* Styl kafelka statusu w trybie jasnym - identyczny jak kafelki 33 / 5.00 */
+    .status-alert.passed,
+    .status-alert {
+      background: #ffffff !important;               /* Czyste tło jak kafelki */
+      border: 1px solid #e2e8f0 !important;         /* Delikatna ramka */
+      border-left: 4px solid #0284c7 !important;    /* Wyrazista niebieska belka po lewej */
+      border-radius: 8px !important;
+      padding: 16px 20px !important;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+      margin-bottom: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    [data-theme="dark"] .status-alert.passed,
+    [data-theme="dark"] .status-alert {
+      background: #1e293b !important;
+      border-color: #334155 !important;
+    }
+
+    .status-alert.conditional {
+      background: var(--warning-bg) !important;
+      border-left: 4px solid var(--warning) !important;
+    }
+    .status-alert.failed {
+      background: var(--danger-bg) !important;
+      border-left: 4px solid var(--danger) !important;
+    }
+
+    /* Tytuł: Semestr zaliczony w 100% na ten sam niebieski kolor */
+    .status-title,
+    #statusTitle {
+      color: #0284c7 !important;                    /* Spójny niebieski z wartościami kafelków */
+      font-size: 16px !important;
+      font-weight: 700 !important;
+      display: flex !important;
+      align-items: center !important;
+      gap: 8px !important;
+    }
+
+    /* Zielone kółeczko / ptaszek odhaczenia */
+    .status-title svg,
+    .status-title .icon-check,
+    #statusTitle svg {
+      color: #16a34a !important;                    /* Wyrazista zieleń odhaczenia */
+      stroke: #16a34a !important;
+    }
+
+    /* Głęboki, czytelny czarny kolor tekstu opisu */
+    .status-desc,
+    #statusDesc,
+    .status-alert p {
+      color: #0f172a !important;                    /* Klasyczny, kontrastowy czarny/antracyt */
+      font-size: 14px !important;
+      font-weight: 500 !important;
+      margin: 6px 0 10px 0 !important;
+    }
+
+    [data-theme="dark"] .status-desc,
+    [data-theme="dark"] #statusDesc,
+    [data-theme="dark"] .status-alert p {
+      color: #f8fafc !important;
+    }
+
+    /* Pasek postępu pod opisem w tonacji niebieskiej */
+    .progress-track {
+      background: #e2e8f0 !important;
+      height: 8px !important;
+      border-radius: 4px !important;
+      overflow: hidden !important;
+      position: relative;
+    }
+
+    [data-theme="dark"] .progress-track {
+      background: #334155 !important;
+    }
+
+    .progress-bar,
+    #progressBar {
+      background: #0284c7 !important;               /* Niebieski pasek spójny z kafelkiem */
+      height: 100%;
+      width: 0%;
+      transition: width 0.3s ease, background-color 0.3s ease;
+    }
+    .progress-threshold {
+      position: absolute;
+      left: 75%;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: #475569;
+      z-index: 2;
+    }
+
+    /* Tabela */
+    .table-container { overflow-x: auto; margin-bottom: 20px; border-radius: 8px; border: 1px solid var(--border); }
+    table { width: 100%; border-collapse: collapse; min-width: 920px; }
+    th, td { padding: 12px 10px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
+    th { background: var(--bg); color: var(--text-muted); font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.03em; }
+    tbody tr:hover { background-color: var(--primary-light); }
+
+    input, select {
+      width: 100%;
+      padding: 7px 10px;
+      border: 1px solid var(--border);
+      background: var(--card-bg);
+      color: var(--text);
+      border-radius: 6px;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    input:focus, select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px var(--primary-light);
+    }
+
+    .score-inputs { display: flex; align-items: center; gap: 4px; }
+    .score-inputs input { width: 52px; text-align: center; }
+    .score-divider { color: var(--text-muted); font-weight: bold; }
+
+    .actions-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 16px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-secondary { background: var(--card-bg); border-color: var(--border); color: var(--text); }
+    .btn-secondary:hover { background: var(--bg); }
+    .btn-danger { background: var(--danger-bg); color: var(--danger); padding: 6px 10px; border-radius: 4px; border: none; }
+    .btn-danger:hover { opacity: 0.85; }
+    .btn-icon-only { padding: 8px; }
+
+    .text-center { text-align: center; }
+
+    /* Dyskretny przycisk pomocy ECTS */
+    .btn-help-link {
+      background: none;
+      border: none;
+      font-size: 12px;
+      color: #64748b;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-weight: 500;
+      transition: color 0.15s ease, background-color 0.15s ease;
+    }
+    .btn-help-link:hover {
+      color: #0f172a;
+      background-color: #f1f5f9;
+    }
+    [data-theme="dark"] .btn-help-link {
+      color: #94a3b8;
+    }
+    [data-theme="dark"] .btn-help-link:hover {
+      color: #f8fafc;
+      background-color: #334155;
+    }
+
+    /* Modal ECTS Info */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background-color: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .modal-card {
+      background-color: #ffffff;
+      color: #1e293b;
+      width: 100%;
+      max-width: 680px;
+      border-radius: 16px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+      border: 1px solid #e2e8f0;
+      overflow: hidden;
+      transform: scale(0.95);
+      transition: transform 0.2s ease;
+    }
+    .modal-overlay.active .modal-card {
+      transform: scale(1);
+    }
+    [data-theme="dark"] .modal-card {
+      background-color: #1e293b;
+      color: #f8fafc;
+      border-color: #334155;
+    }
+    .modal-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    [data-theme="dark"] .modal-card-header {
+      border-bottom-color: #334155;
+    }
+    .modal-icon-badge {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: rgba(2, 132, 199, 0.12);
+      color: #0284c7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-btn-close {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 6px;
+      border-radius: 8px;
+      color: #64748b;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+    .modal-btn-close:hover {
+      background: #f1f5f9;
+      color: #0f172a;
+    }
+    [data-theme="dark"] .modal-btn-close:hover {
+      background: #334155;
+      color: #f8fafc;
+    }
+    .modal-card-body {
+      padding: 20px;
+      max-height: 75vh;
+      overflow-y: auto;
+    }
+    .ects-info-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+    @media (max-width: 620px) {
+      .ects-info-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .ects-info-tile {
+      background-color: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    [data-theme="dark"] .ects-info-tile {
+      background-color: #0f172a;
+      border-color: #334155;
+    }
+    .ects-tile-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 2px;
+    }
+    .ects-tile-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .ects-tile-title {
+      font-size: 13.5px;
+      font-weight: 700;
+      margin: 0;
+      color: #0f172a;
+    }
+    [data-theme="dark"] .ects-tile-title {
+      color: #f8fafc;
+    }
+    .ects-tile-desc {
+      font-size: 12px;
+      line-height: 1.45;
+      color: #475569;
+      margin: 0;
+    }
+    [data-theme="dark"] .ects-tile-desc {
+      color: #94a3b8;
+    }
+    .ects-tile-desc strong {
+      color: #0f172a;
+    }
+    [data-theme="dark"] .ects-tile-desc strong {
+      color: #f1f5f9;
+    }
+    .ects-tile-desc code {
+      font-size: 11px;
+      padding: 1px 4px;
+      background: #e2e8f0;
+      border-radius: 4px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      color: #0284c7;
+    }
+    [data-theme="dark"] .ects-tile-desc code {
+      background: #1e293b;
+      color: #38bdf8;
+    }
+    .modal-card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 12px 20px;
+      border-top: 1px solid #e2e8f0;
+      background: #f8fafc;
+    }
+    [data-theme="dark"] .modal-card-footer {
+      border-top-color: #334155;
+      background: #1e293b;
+    }
+
+    @media print {
+      /* Wymuszenie standardu A4 oraz zachowania kolorów */
+      @page {
+        size: A4 portrait;
+        margin: 12mm 12mm 12mm 12mm;
+      }
+
+      * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+
+      body {
+        background: #ffffff !important;
+        color: #0f172a !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+
+      /* 1. NAPRAWA NAGŁÓWKA - pełna czytelność w obu trybach */
+      h1 {
+        color: #0f172a !important;
+        font-size: 18pt !important;
+        font-weight: 800 !important;
+        margin: 0 0 4px 0 !important;
+        text-align: left !important;
+      }
+
+      .header-subtitle, 
+      header p, 
+      .subtitle,
+      .card > p {
+        color: #475569 !important;
+        font-size: 9pt !important;
+        margin-bottom: 16px !important;
+      }
+
+      /* Ukrycie niepotrzebnych elementów */
+      .actions-bar,
+      .header-actions,
+      .btn,
+      button,
+      .theme-toggle,
+      .simulator-box,
+      #stipendSimulator,
+      th:last-child,
+      td:last-child {
+        display: none !important;
+      }
+
+      .card {
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+        background: transparent !important;
+        max-width: 100% !important;
+      }
+
+      /* 2. KAFELKI PODSUMOWAŃ */
+      .summary-grid {
+        display: grid !important;
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 10px !important;
+        margin-bottom: 14px !important;
+      }
+
+      .summary-card {
+        background: #f8fafc !important;
+        border: 1px solid #cbd5e1 !important;
+        border-left: 4px solid #0284c7 !important;
+        padding: 8px 10px !important;
+        border-radius: 6px !important;
+      }
+
+      .summary-val {
+        font-size: 17pt !important;
+        font-weight: 800 !important;
+        color: #0284c7 !important;
+      }
+
+      .summary-label {
+        font-size: 7.5pt !important;
+        font-weight: 600 !important;
+        color: #475569 !important;
+      }
+
+      /* 3. Ujednolicony kafelek statusu w stylistyce górnych kafelków */
+      .status-alert {
+        background: #f8fafc !important;                 /* Identyczne jasnoszare tło jak wyżej */
+        border: 1px solid #cbd5e1 !important;           /* Identyczna delikatna ramka */
+        border-left: 4px solid #0284c7 !important;      /* Niebieska belka akcentowa po lewej */
+        padding: 10px 14px !important;
+        border-radius: 6px !important;
+        margin-bottom: 14px !important;
+      }
+
+      /* Tytuł "Semestr zaliczony w 100%" na ładny niebieski kolor */
+      .status-title,
+      #statusTitle {
+        color: #0284c7 !important;                      /* Spójny niebieski kolor */
+        font-size: 11pt !important;
+        font-weight: 700 !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+      }
+
+      /* Zielony akcent wyłącznie dla ikony/ptaszka */
+      .status-title svg,
+      .status-title span.icon,
+      #statusTitle svg {
+        color: #16a34a !important;                      /* Wyrazista zieleń odhaczenia */
+        stroke: #16a34a !important;
+      }
+
+      /* Wyraźny, czytelny czarny tekst opisu */
+      .status-desc,
+      #statusDesc,
+      .status-alert p {
+        color: #0f172a !important;                      /* Głęboka czerń/grafit zamiast wyblakłej bieli */
+        font-size: 8.5pt !important;
+        font-weight: 500 !important;
+        margin: 4px 0 8px 0 !important;
+        line-height: 1.4 !important;
+      }
+
+      /* Pasek postępu pod opisem */
+      .progress-track {
+        background: #e2e8f0 !important;
+        height: 6px !important;
+        border-radius: 3px !important;
+        overflow: hidden !important;
+      }
+
+      .progress-bar,
+      #progressBar {
+        background: #0284c7 !important;                  /* Spójny niebieski pasek na wydruku */
+        height: 100% !important;
+      }
+
+      /* 4. TABELA I ZWARTE POPRAWNE ODPOWIEDZI */
+      .table-container {
+        overflow: visible !important;
+        margin: 0 !important;
+        border: none !important;
+      }
+
+      table {
+        width: 100% !important;
+        min-width: 0 !important;
+        table-layout: fixed !important;
+        border-collapse: collapse !important;
+      }
+
+      th {
+        background: #f1f5f9 !important;
+        color: #334155 !important;
+        font-weight: 700 !important;
+        font-size: 8pt !important;
+        padding: 6px 4px !important;
+        border: 1px solid #cbd5e1 !important;
+        text-transform: uppercase;
+      }
+
+      td {
+        padding: 6px 4px !important;
+        font-size: 8.5pt !important;
+        color: #0f172a !important; /* Wyraźny, ciemny tekst */
+        border: 1px solid #cbd5e1 !important;
+        text-align: center !important;
+      }
+
+      /* Wyrównanie kolumn tekstowych */
+      th:nth-child(1), td:nth-child(1),
+      th:nth-child(2), td:nth-child(2) {
+        text-align: left !important;
+        padding-left: 8px !important;
+      }
+
+      /* Skorygowany podział szerokości kolumn (łącznie 100%) */
+      th:nth-child(1), td:nth-child(1) { width: 13% !important; } /* Kategoria */
+      th:nth-child(2), td:nth-child(2) { width: 33% !important; } /* Nazwa przedmiotu */
+      th:nth-child(3), td:nth-child(3) { width: 14% !important; } /* Poprawne odp. (zwiększone z 11%) */
+      th:nth-child(4), td:nth-child(4) { width: 10% !important; } /* Ocena test */
+      th:nth-child(5), td:nth-child(5) { width: 10% !important; } /* Praca zalicz. */
+      th:nth-child(6), td:nth-child(6) { width: 11% !important; } /* Ocena końcowa */
+      th:nth-child(7), td:nth-child(7) { width: 9% !important; }  /* ECTS */
+
+      /* NAPRAWA UCIĘTEGO 10 / 10 */
+      .score-inputs {
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        white-space: nowrap !important;
+        width: 100% !important;
+        gap: 1px !important;
+      }
+
+      .score-inputs input {
+        width: 26px !important;       /* Szerokość mieszcząca swobodnie "10" */
+        min-width: 0 !important;
+        max-width: 28px !important;
+        text-align: center !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        font-weight: 600 !important;
+        font-size: 8.5pt !important;
+        border: none !important;
+        background: transparent !important;
+        -moz-appearance: textfield !important; /* Usunięcie strzałek w Firefox */
+      }
+
+      /* Usunięcie strzałek góra/dół z Chrome/Edge w druku */
+      .score-inputs input::-webkit-outer-spin-button,
+      .score-inputs input::-webkit-inner-spin-button {
+        -webkit-appearance: none !important;
+        margin: 0 !important;
+      }
+
+      .score-divider {
+        color: #64748b !important;
+        font-weight: 700 !important;
+        font-size: 8.5pt !important;
+        padding: 0 2px !important;
+      }
+
+      /* Wymuszenie czystego tekstu zamiast pól formularza */
+      input, select {
+        border: none !important;
+        background: transparent !important;
+        padding: 0 !important;
+        color: #0f172a !important;
+        font-size: inherit !important;
+        font-weight: 500 !important;
+        box-shadow: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header-bar">
+    <div class="header-title-group">
+      <div class="header-icon" title="Logo TB">
+        <img src="logo-tb.png" alt="Logo TB">
+      </div>
+      <div>
+        <h1>Kalkulator Semestralny ECTS, Ocen i Warunków</h1>
+        <p class="subtitle">Średnia ważona ECTS, oceny cząstkowe (test + praca) oraz weryfikacja progu 75% na wpis warunkowy</p>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn btn-secondary btn-icon-only" onclick="toggleTheme()" title="Przełącz motyw ciemny/jasny">
+        <i data-lucide="moon" id="themeIcon"></i>
+      </button>
+      <button class="btn btn-secondary btn-icon-only" onclick="window.print()" title="Drukuj / PDF">
+        <i data-lucide="printer"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="card">
+    <!-- Wskaźniki liczbowe -->
+    <div class="summary-grid">
+      <div class="summary-card">
+        <div class="summary-val" id="sumEarnedEcts">0</div>
+        <div class="summary-label">Aktualnie zdobyte ECTS</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-val" id="sumTotalEcts">0</div>
+        <div class="summary-label">Łączna suma ECTS w semestrze</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-val" id="ectsPercentage">0%</div>
+        <div class="summary-label">Procent realizacji (wymóg warunku: 75%)</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-val" id="avgFinalGrade">-</div>
+        <div class="summary-label">Średnia ocen (ważona ECTS)</div>
+      </div>
+    </div>
+
+    <!-- Alert statusu formalnego (Warunek / Zaliczenie) -->
+    <div id="statusAlert" class="status-alert passed">
+      <div class="status-title" id="statusTitle">
+        <i data-lucide="shield-check"></i> Stan rozliczenia semestru
+      </div>
+      <p class="status-desc" id="statusDesc">Wprowadź swoje oceny i punkty ECTS poniżej.</p>
+      <div class="progress-track" title="Pasek postępu zaliczenia ECTS. Kreska oznacza próg 75% na wpis warunkowy.">
+        <div class="progress-threshold" title="Próg 75% na wpis warunkowy"></div>
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+    </div>
+
+    <!-- Tabela przedmiotów -->
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 14%;">Kategoria / Typ</th>
+            <th style="width: 23%;">Nazwa przedmiotu</th>
+            <th style="width: 13%; text-align: center;">Poprawne odp.</th>
+            <th style="width: 10%; text-align: center;">Ocena test</th>
+            <th style="width: 11%; text-align: center;">Praca zalicz.</th>
+            <th style="width: 11%; text-align: center;">Ocena końcowa</th>
+            <th style="width: 9%; text-align: center;">ECTS</th>
+            <th style="width: 5%; text-align: center;"></th>
+          </tr>
+        </thead>
+        <tbody id="courseTableBody"></tbody>
+      </table>
+    </div>
+
+    <div class="actions-bar">
+      <div style="display: flex; gap: 8px;">
+        <button class="btn btn-primary" onclick="addRow()"><i data-lucide="plus"></i> Dodaj przedmiot</button>
+        <button class="btn btn-secondary" onclick="resetToDefault()"><i data-lucide="rotate-ccw"></i> Przywróć domyślne</button>
+      </div>
+      <small style="color: var(--text-muted); display: flex; align-items: center; gap: 4px;">
+        <i data-lucide="info" style="width: 14px; height: 14px;"></i> Wpis warunkowy wymaga zdobycia minimum 75% łącznej puli ECTS w semestrze.
+      </small>
+    </div>
+
+    <!-- Szybki kalkulator stypendium -->
+    <div class="simulator-box">
+      <div>
+        <strong style="font-size: 14px;">Symulator celu stypendialnego:</strong>
+        <p style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-muted);">
+          Podaj docelową średnią i pozostałe ECTS, aby sprawdzić wymaganą ocenę:
+        </p>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+        <label style="font-size: 13px;">Cel: <input type="number" id="simTarget" value="4.50" step="0.05" min="3.0" max="5.5" style="width: 65px; text-align: center;"></label>
+        <label style="font-size: 13px;">Brakujące ECTS: <input type="number" id="simEcts" value="10" min="1" max="60" style="width: 55px; text-align: center;"></label>
+        <button class="btn btn-secondary" onclick="calculateTarget()">Oblicz</button>
+        <span id="simResult" style="font-size: 13px; font-weight: 700; color: var(--primary);"></span>
+      </div>
+    </div>
+
+    <!-- Dyskretny przycisk akcji ECTS -->
+    <div style="display: flex; justify-content: flex-end; margin-top: 14px;">
+      <button id="btnOpenEctsModal" class="btn-help-link" onclick="openEctsModal()" title="Kliknij, aby poznać zasady i regulamin systemu ECTS">
+        <i data-lucide="help-circle" style="width: 14px; height: 14px;"></i>
+        Jak działa system ECTS? (Zasady i Regulamin)
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL: Jak działa system ECTS -->
+<div id="modal-ects-info" class="modal-overlay" onclick="handleModalBackdropClick(event)">
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalEctsTitle">
+    <div class="modal-card-header">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <div class="modal-icon-badge">
+          <i data-lucide="book-marked"></i>
+        </div>
+        <div>
+          <h3 id="modalEctsTitle" style="margin: 0; font-size: 16px; font-weight: 700; color: var(--text);">Jak działa system ECTS?</h3>
+          <p style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-muted);">Zasady rozliczania studiów, wag ocen i wpisu warunkowego</p>
+        </div>
+      </div>
+      <button class="modal-btn-close" onclick="closeEctsModal()" title="Zamknij (ESC)">
+        <i data-lucide="x" style="width: 18px; height: 18px;"></i>
+      </button>
+    </div>
+
+    <div class="modal-card-body">
+      <div class="ects-info-grid">
+        <!-- Kafelek 1: Miara nakładu pracy -->
+        <div class="ects-info-tile">
+          <div class="ects-tile-head">
+            <div class="ects-tile-icon" style="background: rgba(2, 132, 199, 0.12); color: #0284c7;">
+              <i data-lucide="clock" style="width: 16px; height: 16px;"></i>
+            </div>
+            <h4 class="ects-tile-title">1. Miara nakładu pracy</h4>
+          </div>
+          <p class="ects-tile-desc">
+            <strong>1 punkt ECTS</strong> odpowiada średnio <strong>25–30 godzinom</strong> łącznej pracy studenta (wykłady, ćwiczenia, laboratoria + praca własna). Standardowy semestr to <strong>30 ECTS</strong> (60 ECTS rocznie).
+          </p>
+        </div>
+
+        <!-- Kafelek 2: Zasada zero-jedynkowa -->
+        <div class="ects-info-tile">
+          <div class="ects-tile-head">
+            <div class="ects-tile-icon" style="background: rgba(22, 163, 74, 0.12); color: #16a34a;">
+              <i data-lucide="check-check" style="width: 16px; height: 16px;"></i>
+            </div>
+            <h4 class="ects-tile-title">2. Zasada zero-jedynkowa</h4>
+          </div>
+          <p class="ects-tile-desc">
+            Punkty ECTS nie są ułamkowe względem stopnia. Pozytywna ocena (<strong>3.0 – 5.0</strong> lub <strong>ZAL</strong>) daje <strong>100% punktów</strong>. Ocena <strong>2.0</strong> lub <strong>NZAL</strong> oznacza <strong>0 ECTS</strong> i generuje deficyt punktowy.
+          </p>
+        </div>
+
+        <!-- Kafelek 3: Średnia ważona ECTS -->
+        <div class="ects-info-tile">
+          <div class="ects-tile-head">
+            <div class="ects-tile-icon" style="background: rgba(99, 102, 241, 0.12); color: #6366f1;">
+              <i data-lucide="scale" style="width: 16px; height: 16px;"></i>
+            </div>
+            <h4 class="ects-tile-title">3. Średnia ważona punktami</h4>
+          </div>
+          <p class="ects-tile-desc">
+            Średnia wyliczana jest ze wzoru: <code>&Sigma;(Ocena &times; ECTS) / &Sigma;ECTS</code>. Moduły o wyższej randze ECTS (np. 6–8 pkt) mają proporcjonalnie znacznie większy wpływ na średnią stypendialną niż przedmioty 1–2 pkt.
+          </p>
+        </div>
+
+        <!-- Kafelek 4: Wpis warunkowy -->
+        <div class="ects-info-tile">
+          <div class="ects-tile-head">
+            <div class="ects-tile-icon" style="background: rgba(217, 119, 6, 0.12); color: #d97706;">
+              <i data-lucide="alert-triangle" style="width: 16px; height: 16px;"></i>
+            </div>
+            <h4 class="ects-tile-title">4. Wpis warunkowy (próg 75%)</h4>
+          </div>
+          <p class="ects-tile-desc">
+            Regulaminy studiów dopuszczają tzw. <strong>awans z długiem punktowym</strong>, jeśli student zdobył minimum <strong>75% wymaganych ECTS</strong> w semestrze. Brakujące punkty należy uzupełnić (poprawić) w kolejnym roku akademickim.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-card-footer">
+      <button class="btn btn-primary" style="padding: 7px 20px; font-size: 13px;" onclick="closeEctsModal()">Rozumiem</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Startowy zestaw danych (Semestr IV Psychologia - zaktualizowany)
+const defaultCourses = [
+  { category: "Podstawowy", name: "Krytyczna analiza tekstów naukowych", correct: 10, total: 10, testGrade: 5.0, assignmentGrade: 5.0, finalGrade: 5.0, ects: 2 },
+  { category: "Podstawowy", name: "Psychologia eksperymentalna", correct: 10, total: 10, testGrade: 5.0, assignmentGrade: 5.0, finalGrade: 5.0, ects: 3 },
+  { category: "Podstawowy", name: "Umiejętności psychologiczne", correct: 10, total: 10, testGrade: 5.0, assignmentGrade: 5.0, finalGrade: 5.0, ects: 5 },
+  { category: "Podstawowy", name: "Psychopatologia", correct: 10, total: 10, testGrade: 5.0, assignmentGrade: 5.0, finalGrade: 5.0, ects: 3 },
+  { category: "Specjalność", name: "Zaburzenia osobowości", correct: 10, total: 10, testGrade: 5.0, assignmentGrade: 5.0, finalGrade: 5.0, ects: 6 },
+  { category: "Specjalność", name: "Zaburzenia odżywiania się", correct: 10, total: 10, testGrade: 5.0, assignmentGrade: 5.0, finalGrade: 5.0, ects: 6 },
+  { category: "Praktyki", name: "Praktyka zawodowa", correct: 10, total: 10, testGrade: 5.0, assignmentGrade: 5.0, finalGrade: 5.0, ects: 8 }
+];
+
+let courses = loadSavedCourses() || JSON.parse(JSON.stringify(defaultCourses));
+
+function initIcons() {
+  if (window.lucide) {
+    window.lucide.createIcons();
+  }
+}
+
+function createRowHtml(data = {}) {
+  const tr = document.createElement("tr");
+  tr.className = "course-row";
+  tr.innerHTML = `
+    <td>
+      <input type="text" class="input-category" value="${escapeHtml(data.category || 'Podstawowy')}" placeholder="np. Specjalność" onchange="autoSave()">
+    </td>
+    <td>
+      <input type="text" class="input-name" value="${escapeHtml(data.name || '')}" placeholder="Nazwa modułu" onchange="autoSave()">
+    </td>
+    <td>
+      <div class="score-inputs">
+        <input type="number" min="0" class="input-correct" value="${data.correct !== undefined ? data.correct : ''}" placeholder="P" oninput="autoSave()">
+        <span class="score-divider">/</span>
+        <input type="number" min="1" class="input-total" value="${data.total !== undefined ? data.total : ''}" placeholder="M" oninput="autoSave()">
+      </div>
+    </td>
+    <td>
+      <input type="number" step="0.5" min="2" max="5.5" class="input-test-grade text-center" value="${data.testGrade || ''}" placeholder="np. 4.5" oninput="handleGradeCalc(this)">
+    </td>
+    <td>
+      <input type="number" step="0.5" min="2" max="5.5" class="input-assignment-grade text-center" value="${data.assignmentGrade || ''}" placeholder="np. 4.0" oninput="handleGradeCalc(this)">
+    </td>
+    <td>
+      <input type="text" class="input-final-grade text-center" value="${data.finalGrade || ''}" placeholder="np. 4.5 lub ZAL" oninput="recalculate(); autoSave();">
+    </td>
+    <td>
+      <input type="number" min="0" step="0.5" class="input-ects text-center" value="${data.ects !== undefined ? data.ects : 0}" oninput="recalculate(); autoSave();">
+    </td>
+    <td class="text-center">
+      <button class="btn btn-danger" onclick="removeRow(this)" title="Usuń wiersz">✕</button>
+    </td>
+  `;
+  return tr;
+}
+
+function renderTable() {
+  const tbody = document.getElementById("courseTableBody");
+  tbody.innerHTML = "";
+  courses.forEach(c => tbody.appendChild(createRowHtml(c)));
+  recalculate();
+  initIcons();
+}
+
+function addRow() {
+  const tbody = document.getElementById("courseTableBody");
+  const newRow = createRowHtml({ category: "Przedmiot", name: "", ects: 3, finalGrade: "5.0" });
+  tbody.appendChild(newRow);
+  recalculate();
+  autoSave();
+  initIcons();
+}
+
+function removeRow(btn) {
+  const row = btn.closest("tr");
+  row.remove();
+  recalculate();
+  autoSave();
+}
+
+function resetToDefault() {
+  if (confirm("Czy na pewno chcesz przywrócić domyślny zestaw przedmiotów?")) {
+    courses = JSON.parse(JSON.stringify(defaultCourses));
+    renderTable();
+    autoSave();
+  }
+}
+
+function handleGradeCalc(element) {
+  const row = element.closest("tr");
+  const testVal = parseFloat(row.querySelector(".input-test-grade").value);
+  const assignVal = parseFloat(row.querySelector(".input-assignment-grade").value);
+  const finalInput = row.querySelector(".input-final-grade");
+
+  if (!isNaN(testVal) && !isNaN(assignVal)) {
+    const avg = (testVal + assignVal) / 2;
+    finalInput.value = (Math.round(avg * 2) / 2).toFixed(1);
+  } else if (!isNaN(testVal) && isNaN(assignVal)) {
+    finalInput.value = testVal.toFixed(1);
+  }
+  recalculate();
+  autoSave();
+}
+
+function recalculate() {
+  const rows = document.querySelectorAll(".course-row");
+  let totalEcts = 0;
+  let earnedEcts = 0;
+  let weightedGradeSum = 0;
+  let gradedEctsSum = 0;
+
+  rows.forEach(row => {
+    const ects = parseFloat(row.querySelector(".input-ects").value) || 0;
+    const finalGradeStr = (row.querySelector(".input-final-grade").value || "").trim().toUpperCase();
+    const finalGradeNum = parseFloat(finalGradeStr.replace(",", "."));
+
+    totalEcts += ects;
+
+    const isPassedNum = !isNaN(finalGradeNum) && finalGradeNum >= 3.0;
+    const isPassedText = finalGradeStr === "ZAL" || finalGradeStr === "ZALICZONE";
+
+    if (isPassedNum || isPassedText) {
+      earnedEcts += ects;
+      if (isPassedNum && ects > 0) {
+        weightedGradeSum += finalGradeNum * ects;
+        gradedEctsSum += ects;
+      }
+    }
+  });
+
+  // Wskaźniki
+  document.getElementById("sumTotalEcts").textContent = totalEcts;
+  document.getElementById("sumEarnedEcts").textContent = earnedEcts;
+
+  const pct = totalEcts > 0 ? (earnedEcts / totalEcts) * 100 : 0;
+  document.getElementById("ectsPercentage").textContent = `${pct.toFixed(1)}%`;
+
+  const avg = gradedEctsSum > 0 ? (weightedGradeSum / gradedEctsSum).toFixed(2) : "-";
+  document.getElementById("avgFinalGrade").textContent = avg;
+
+  // Logika 75% wpisu warunkowego i paska postępu
+  const progressBar = document.getElementById("progressBar");
+  const alertBox = document.getElementById("statusAlert");
+  const title = document.getElementById("statusTitle");
+  const desc = document.getElementById("statusDesc");
+
+  progressBar.style.width = `${Math.min(pct, 100)}%`;
+
+  const threshold75 = Math.ceil(totalEcts * 0.75);
+
+  if (totalEcts === 0) {
+    alertBox.className = "status-alert conditional";
+    progressBar.style.backgroundColor = "var(--primary)";
+    title.innerHTML = '<i data-lucide="info"></i> Brak przedmiotów';
+    desc.textContent = "Dodaj przedmioty do semestru, aby sprawdzić status kwalifikacji.";
+  } else if (earnedEcts === totalEcts) {
+    alertBox.className = "status-alert passed";
+    progressBar.style.backgroundColor = "var(--success)";
+    title.innerHTML = '<i data-lucide="check-circle"></i> ✓ Semestr zaliczony w 100%';
+    desc.textContent = `Zdobyto pełną pulę ${earnedEcts} z ${totalEcts} ECTS. Gratulacje, brak zaległości punktowych!`;
+  } else if (pct >= 75) {
+    alertBox.className = "status-alert conditional";
+    progressBar.style.backgroundColor = "var(--warning)";
+    const missingFull = totalEcts - earnedEcts;
+    title.innerHTML = '<i data-lucide="alert-triangle"></i> ⚠ Kwalifikacja do wpisu warunkowego (osiągnięto min. 75%)';
+    desc.textContent = `Zdobyłeś ${earnedEcts} ECTS (${pct.toFixed(1)}%). Spełniasz wymóg formalny (min. ${threshold75} ECTS) do złożenia podania o wpis warunkowy na kolejny semestr. Brakuje ${missingFull} ECTS do pełnego rozliczenia.`;
+  } else {
+    alertBox.className = "status-alert failed";
+    progressBar.style.backgroundColor = "var(--danger)";
+    const missingTo75 = threshold75 - earnedEcts;
+    title.innerHTML = '<i data-lucide="x-circle"></i> ✕ Brak kwalifikacji do wpisu warunkowego (< 75%)';
+    desc.textContent = `Aktualnie masz ${earnedEcts} ECTS (${pct.toFixed(1)}%). Do progu 75% umożliwiającego wniosek o warunek brakuje Ci jeszcze co najmniej ${missingTo75} ECTS (wymagane min. ${threshold75} z ${totalEcts} ECTS).`;
+  }
+
+  initIcons();
+}
+
+function calculateTarget() {
+  const targetAvg = parseFloat(document.getElementById("simTarget").value) || 4.5;
+  const remEcts = parseFloat(document.getElementById("simEcts").value) || 10;
+
+  const rows = document.querySelectorAll(".course-row");
+  let currentSum = 0;
+  let currentEcts = 0;
+
+  rows.forEach(row => {
+    const ects = parseFloat(row.querySelector(".input-ects").value) || 0;
+    const finalGradeStr = (row.querySelector(".input-final-grade").value || "").trim().toUpperCase();
+    const finalGradeNum = parseFloat(finalGradeStr.replace(",", "."));
+    if (!isNaN(finalGradeNum) && ects > 0) {
+      currentSum += finalGradeNum * ects;
+      currentEcts += ects;
+    }
+  });
+
+  const totalRequiredSum = targetAvg * (currentEcts + remEcts);
+  const requiredAvg = (totalRequiredSum - currentSum) / remEcts;
+  const resEl = document.getElementById("simResult");
+
+  if (requiredAvg > 5.5) {
+    resEl.textContent = `Niewykonalne (wymagana średnia: ${requiredAvg.toFixed(2)} > 5.5)`;
+    resEl.style.color = "var(--danger)";
+  } else if (requiredAvg < 2.0) {
+    resEl.textContent = `Cel zabezpieczony! Wystarczą oceny 2.0.`;
+    resEl.style.color = "var(--success)";
+  } else {
+    resEl.textContent = `Wymagana średnia z pozostałych: ${requiredAvg.toFixed(2)}`;
+    resEl.style.color = "var(--primary)";
+  }
+}
+
+// Obsługa localStorage
+function autoSave() {
+  const rows = document.querySelectorAll(".course-row");
+  const data = [];
+  rows.forEach(row => {
+    data.push({
+      category: row.querySelector(".input-category").value,
+      name: row.querySelector(".input-name").value,
+      correct: row.querySelector(".input-correct").value,
+      total: row.querySelector(".input-total").value,
+      testGrade: row.querySelector(".input-test-grade").value,
+      assignmentGrade: row.querySelector(".input-assignment-grade").value,
+      finalGrade: row.querySelector(".input-final-grade").value,
+      ects: parseFloat(row.querySelector(".input-ects").value) || 0
+    });
+  });
+  localStorage.setItem("kalkulator_warunek_data", JSON.stringify(data));
+}
+
+function loadSavedCourses() {
+  try {
+    const raw = localStorage.getItem("kalkulator_warunek_data");
+    return raw ? JSON.parse(raw) : null;
+  } catch(e) {
+    return null;
+  }
+}
+
+function exportData() {
+  autoSave();
+  const raw = localStorage.getItem("kalkulator_warunek_data");
+  const blob = new Blob([raw], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `kalkulator-ects-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      courses = JSON.parse(e.target.result);
+      renderTable();
+      autoSave();
+    } catch(err) {
+      alert("Błąd odczytu pliku: " + err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+// Motyw ciemny / jasny
+function toggleTheme() {
+  const current = document.documentElement.getAttribute("data-theme");
+  const next = current === "dark" ? "light" : "dark";
+  if (next === "dark") {
+    document.documentElement.setAttribute("data-theme", "dark");
+  } else {
+    document.documentElement.removeAttribute("data-theme");
+  }
+  localStorage.setItem("kalkulator_theme", next);
+  updateThemeIcon();
+}
+
+function updateThemeIcon() {
+  const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+  const icon = document.getElementById("themeIcon");
+  if (icon) {
+    icon.setAttribute("data-lucide", isDark ? "sun" : "moon");
+    initIcons();
+  }
+}
+
+function escapeHtml(text) {
+  if (!text) return "";
+  return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// Obsługa modalu informacyjnego ECTS
+function openEctsModal() {
+  const modal = document.getElementById("modal-ects-info");
+  if (modal) {
+    modal.classList.add("active");
+    initIcons();
+  }
+}
+
+function closeEctsModal() {
+  const modal = document.getElementById("modal-ects-info");
+  if (modal) {
+    modal.classList.remove("active");
+  }
+}
+
+function handleModalBackdropClick(event) {
+  if (event.target && event.target.id === "modal-ects-info") {
+    closeEctsModal();
+  }
+}
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    closeEctsModal();
+  }
+});
+
+window.onload = () => {
+  if (localStorage.getItem("kalkulator_theme") === "dark" || (!localStorage.getItem("kalkulator_theme") && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+    document.documentElement.setAttribute("data-theme", "dark");
+  }
+  updateThemeIcon();
+  renderTable();
+};
+</script>
+
+</body>
+</html>
