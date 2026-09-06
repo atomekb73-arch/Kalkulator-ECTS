@@ -130,7 +130,7 @@
     /* Kafelki podsumowujące */
     .summary-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      grid-template-columns: repeat(4, 1fr);
       gap: 16px;
       margin-bottom: 20px;
     }
@@ -147,6 +147,34 @@
 
     .summary-val { font-size: 26px; font-weight: 800; color: var(--primary); }
     .summary-label { font-size: 13px; color: var(--text-muted); margin-top: 4px; font-weight: 500; }
+
+    /* Układ 2x2 i kompaktowa skala kafelków na smartfonach (< 640px) */
+    @media (max-width: 640px) {
+      .summary-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+      .summary-card {
+        padding: 8px 10px;
+        border-radius: 6px;
+        border-left-width: 3px;
+      }
+      .summary-val {
+        font-size: 1.25rem;
+        font-weight: 700;
+        line-height: 1.2;
+      }
+      .summary-label {
+        font-size: 0.72rem;
+        line-height: 1.15;
+        margin-top: 2px;
+        color: #64748b;
+      }
+      [data-theme="dark"] .summary-label {
+        color: #94a3b8;
+      }
+    }
 
     /* Styl kafelka statusu w trybie jasnym - identyczny jak kafelki podsumowujące */
     .status-alert.passed,
