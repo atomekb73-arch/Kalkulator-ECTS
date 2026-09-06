@@ -72,7 +72,10 @@ export function calculateSemesterStats(subjects = [], nominalEcts = 30) {
   subjects.forEach(sub => {
     const ects = parseFloat(sub.ects) || 0;
     const gradeInfo = getGradeInfo(sub.grade);
-    const countInAvg = sub.countInAverage !== false; // Domyślnie wliczany do średniej
+    const isPractice = 
+      (sub.category && (sub.category.trim().toLowerCase() === "praktyki" || sub.category.trim().toLowerCase().includes("praktyk"))) ||
+      (sub.name && sub.name.toLowerCase().includes("praktyk"));
+    const countInAvg = sub.countInAverage !== false && !isPractice; // Domyślnie wliczany do średniej, o ile nie jest praktyką
 
     totalEcts += ects;
 
@@ -88,7 +91,7 @@ export function calculateSemesterStats(subjects = [], nominalEcts = 30) {
       pendingEcts += ects;
     }
 
-    // Obliczanie średniej (tylko oceny numeryczne i włączone do średniej)
+    // Obliczanie średniej (tylko oceny numeryczne i włączone do średniej, z wykluczeniem praktyk)
     if (gradeInfo.numeric !== null && countInAvg) {
       weightedSum += gradeInfo.numeric * ects;
       weightedEctsSum += ects;

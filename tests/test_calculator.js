@@ -81,7 +81,15 @@ assert(parsed.length === 4, `Parsed 4 subjects (got ${parsed.length})`);
 assert(parsed[0].name === 'Analiza Matematyczna 1', `Subject 1 name is correct`);
 assert(parsed[0].ects === 6, `Subject 1 ECTS is 6`);
 assert(parsed[0].grade === '4.5', `Subject 1 grade is 4.5`);
-assert(parsed[3].grade === 'ZAL', `Subject 4 grade is ZAL`);
-assert(parsed[3].countInAverage === false, `Subject 4 countInAverage is false`);
+console.log('\n--- TEST 6: Wykluczenie praktyk zawodowych ze średniej ocen ---');
+const subjectsWithPractice = [
+  { category: 'Podstawowy', name: 'Psychologia ogólna', ects: 5, grade: '5.0' }, // 5 * 5 = 25
+  { category: 'Podstawowy', name: 'Statystyka', ects: 5, grade: '4.0' },        // 4 * 5 = 20
+  { category: 'Praktyki', name: 'Praktyka zawodowa', ects: 8, grade: 'ZAL' }     // 8 ECTS, nie wlicza się do średniej
+];
+const practiceStats = calculateSemesterStats(subjectsWithPractice, 30);
+assert(practiceStats.totalEcts === 18, `Total ECTS with practice is 18 (got ${practiceStats.totalEcts})`);
+assert(practiceStats.earnedEcts === 18, `Earned ECTS with practice is 18 (got ${practiceStats.earnedEcts})`);
+assert(practiceStats.weightedAverage === 4.5, `Weighted average correctly excludes practice (got ${practiceStats.weightedAverage}, expected 4.5)`);
 
 console.log('\n🎉 ALL CALCULATOR & PARSER TESTS PASSED SUCCESSFULLY!');

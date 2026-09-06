@@ -1646,20 +1646,27 @@ function recalculate() {
 
   rows.forEach(row => {
     const ects = parseFloat(row.querySelector(".input-ects").value) || 0;
+    const cat = (row.querySelector(".input-category")?.value || "").trim().toLowerCase();
+    const name = (row.querySelector(".input-name")?.value || "").trim().toLowerCase();
     const finalGradeStr = (row.querySelector(".input-final-grade").value || "").trim().toUpperCase();
     const finalGradeNum = parseFloat(finalGradeStr.replace(",", "."));
+
+    const isPractice = cat === "praktyki" || cat.includes("praktyk") || name.includes("praktyk");
 
     totalEcts += ects;
 
     const isPassedNum = !isNaN(finalGradeNum) && finalGradeNum >= 3.0;
     const isPassedText = finalGradeStr === "ZAL" || finalGradeStr === "ZALICZONE";
 
+    // Do puli zdobytych ECTS wliczamy każdy zaliczony przedmiot (w tym praktyki)
     if (isPassedNum || isPassedText) {
       earnedEcts += ects;
-      if (isPassedNum && ects > 0) {
-        weightedGradeSum += finalGradeNum * ects;
-        gradedEctsSum += ects;
-      }
+    }
+
+    // Do średniej ocen wliczamy TYLKO przedmioty, które NIE są praktykami i mają ocenę numeryczną
+    if (isPassedNum && !isPractice && ects > 0) {
+      weightedGradeSum += finalGradeNum * ects;
+      gradedEctsSum += ects;
     }
   });
 
@@ -1739,9 +1746,14 @@ function calculateTarget() {
 
   rows.forEach(row => {
     const ects = parseFloat(row.querySelector(".input-ects").value) || 0;
+    const cat = (row.querySelector(".input-category")?.value || "").trim().toLowerCase();
+    const name = (row.querySelector(".input-name")?.value || "").trim().toLowerCase();
     const finalGradeStr = (row.querySelector(".input-final-grade").value || "").trim().toUpperCase();
     const finalGradeNum = parseFloat(finalGradeStr.replace(",", "."));
-    if (!isNaN(finalGradeNum) && ects > 0) {
+
+    const isPractice = cat === "praktyki" || cat.includes("praktyk") || name.includes("praktyk");
+
+    if (!isPractice && !isNaN(finalGradeNum) && ects > 0) {
       currentSum += finalGradeNum * ects;
       currentEcts += ects;
     }
