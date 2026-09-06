@@ -1356,14 +1356,14 @@
       </div>
       <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
         <label style="font-size: 13px;">Cel: <input type="number" id="simTarget" value="4.75" step="0.01" min="4.75" max="5.00" oninput="validateSimTarget()" style="width: 65px; text-align: center;"></label>
-        <label style="font-size: 13px;">Brakujące ECTS: <input type="number" id="simEcts" value="10" min="1" max="60" style="width: 55px; text-align: center;"></label>
+        <label style="font-size: 13px;">Brakujące ECTS: <input type="number" id="simEcts" value="10" min="0" max="60" style="width: 55px; text-align: center;"></label>
         <button class="btn btn-secondary" onclick="calculateTarget()">Oblicz</button>
-        <span id="simResult" style="font-size: 13px; font-weight: 700; color: var(--primary);"></span>
       </div>
       <div id="simThresholdNotice" style="display: none; align-items: center; gap: 4px; font-size: 11.5px; color: #d97706; margin-top: 6px; font-weight: 500;">
         <i data-lucide="alert-circle" style="width: 14px; height: 14px; flex-shrink: 0;"></i>
         <span>Zgodnie z Regulaminem WSKZ minimalna średnia kwalifikująca do ubiegania się o stypendium rektora wynosi 4.75</span>
       </div>
+      <div id="simResult" style="margin-top: 8px; font-size: 13px; font-weight: 600; line-height: 1.45;"></div>
       <p class="mt-3 text-xs text-slate-500 dark:text-slate-400 leading-relaxed flex items-start gap-1.5 simulator-disclaimer print-hidden">
         <i data-lucide="info" class="w-4 h-4 shrink-0 text-slate-400 dark:text-slate-500 mt-0.5" style="width: 16px; height: 16px;"></i>
         <span>
@@ -1738,7 +1738,16 @@ function calculateTarget() {
   validateSimTarget();
   const targetInput = document.getElementById("simTarget");
   const targetAvg = parseFloat(targetInput ? targetInput.value : 4.75) || 4.75;
-  const remEcts = parseFloat(document.getElementById("simEcts").value) || 10;
+  const remEctsInput = document.getElementById("simEcts");
+  const remEcts = parseFloat(remEctsInput ? remEctsInput.value : 0);
+  const resEl = document.getElementById("simResult");
+  if (!resEl) return;
+
+  if (isNaN(remEcts) || remEcts <= 0) {
+    resEl.textContent = "Wszystkie przedmioty w bieżącej puli zostały już rozliczone.";
+    resEl.style.color = "var(--text-muted)";
+    return;
+  }
 
   const rows = document.querySelectorAll(".course-row");
   let currentSum = 0;
@@ -1759,18 +1768,20 @@ function calculateTarget() {
     }
   });
 
+  const currAvg = currentEcts > 0 ? (currentSum / currentEcts) : null;
   const totalRequiredSum = targetAvg * (currentEcts + remEcts);
   const requiredAvg = (totalRequiredSum - currentSum) / remEcts;
-  const resEl = document.getElementById("simResult");
 
-  if (requiredAvg > 5.5) {
-    resEl.textContent = `Niewykonalne (wymagana średnia: ${requiredAvg.toFixed(2)} > 5.5)`;
+  if (requiredAvg > 5.0) {
+    resEl.textContent = "Cel nieosiągalny (wymagana średnia przekracza 5.00).";
     resEl.style.color = "var(--danger)";
-  } else if (requiredAvg < 2.0) {
-    resEl.textContent = `Cel zabezpieczony! Wystarczą oceny 2.0.`;
+  } else if (currAvg !== null && requiredAvg < currAvg) {
+    const minGradeText = Math.max(2.0, requiredAvg).toFixed(2);
+    resEl.textContent = `Masz zapas punktowy! Przy Twojej obecnej średniej (${currAvg.toFixed(2)}), aby na koniec utrzymać cel ${targetAvg.toFixed(2)}, z pozostałych ${remEcts} ECTS wystarczy uzyskać średnią min. ${minGradeText}.`;
     resEl.style.color = "var(--success)";
   } else {
-    resEl.textContent = `Wymagana średnia z pozostałych: ${requiredAvg.toFixed(2)}`;
+    const minGradeText = Math.max(2.0, requiredAvg).toFixed(2);
+    resEl.textContent = `Aby osiągnąć cel ${targetAvg.toFixed(2)}, z pozostałych ${remEcts} ECTS musisz uzyskać średnią min. ${minGradeText}.`;
     resEl.style.color = "var(--primary)";
   }
 }
