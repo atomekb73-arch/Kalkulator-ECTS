@@ -482,10 +482,10 @@
     }
 
     @media print {
-      /* Wymuszenie standardu A4 oraz zachowania kolorów */
+      /* Wymuszenie standardu A4, marginesów oraz zachowania kolorów */
       @page {
         size: A4 portrait;
-        margin: 12mm 12mm 12mm 12mm;
+        margin: 6mm 8mm !important;
       }
 
       * {
@@ -493,19 +493,31 @@
         print-color-adjust: exact !important;
       }
 
-      body {
+      html,
+      body,
+      .container {
         background: #ffffff !important;
         color: #0f172a !important;
-        padding: 0 !important;
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: 100% !important;
+        overflow: hidden !important;
         margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+      }
+
+      .header-bar {
+        margin-bottom: 8px !important;
       }
 
       /* 1. NAPRAWA NAGŁÓWKA - pełna czytelność w obu trybach */
       h1 {
         color: #0f172a !important;
-        font-size: 18pt !important;
+        font-size: 16pt !important;
         font-weight: 800 !important;
-        margin: 0 0 4px 0 !important;
+        margin: 0 0 2px 0 !important;
         text-align: left !important;
       }
 
@@ -514,11 +526,11 @@
       .subtitle,
       .card > p {
         color: #475569 !important;
-        font-size: 9pt !important;
-        margin-bottom: 16px !important;
+        font-size: 8.5pt !important;
+        margin-bottom: 8px !important;
       }
 
-      /* Ukrycie niepotrzebnych elementów */
+      /* Ukrycie niepotrzebnych elementów i całkowite zwolnienie miejsca */
       .actions-bar,
       .header-actions,
       .btn,
@@ -526,9 +538,17 @@
       .theme-toggle,
       .simulator-box,
       #stipendSimulator,
+      .btn-help-link,
+      #btnOpenEctsModal,
+      .modal-overlay,
+      #modal-ects-info,
       th:last-child,
       td:last-child {
         display: none !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
       }
 
       .card {
@@ -537,51 +557,62 @@
         padding: 0 !important;
         background: transparent !important;
         max-width: 100% !important;
+        width: 100% !important;
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
       }
 
       /* 2. KAFELKI PODSUMOWAŃ */
       .summary-grid {
         display: grid !important;
         grid-template-columns: repeat(4, 1fr) !important;
-        gap: 10px !important;
-        margin-bottom: 14px !important;
+        gap: 8px !important;
+        margin-bottom: 8px !important;
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
       }
 
       .summary-card {
         background: #f8fafc !important;
         border: 1px solid #cbd5e1 !important;
         border-left: 4px solid #0284c7 !important;
-        padding: 8px 10px !important;
+        padding: 6px 8px !important;
         border-radius: 6px !important;
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
       }
 
       .summary-val {
-        font-size: 17pt !important;
+        font-size: 15pt !important;
         font-weight: 800 !important;
         color: #0284c7 !important;
+        line-height: 1.1 !important;
       }
 
       .summary-label {
         font-size: 7.5pt !important;
         font-weight: 600 !important;
         color: #475569 !important;
+        margin-top: 2px !important;
       }
 
       /* 3. Ujednolicony kafelek statusu w stylistyce górnych kafelków */
       .status-alert {
-        background: #f8fafc !important;                 /* Identyczne jasnoszare tło jak wyżej */
-        border: 1px solid #cbd5e1 !important;           /* Identyczna delikatna ramka */
-        border-left: 4px solid #0284c7 !important;      /* Niebieska belka akcentowa po lewej */
-        padding: 10px 14px !important;
+        background: #f8fafc !important;
+        border: 1px solid #cbd5e1 !important;
+        border-left: 4px solid #0284c7 !important;
+        padding: 6px 10px !important;
         border-radius: 6px !important;
-        margin-bottom: 14px !important;
+        margin-bottom: 8px !important;
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
       }
 
-      /* Tytuł "Semestr zaliczony w 100%" na ładny niebieski kolor */
+      /* Tytuł "Semestr zaliczony w 100%" */
       .status-title,
       #statusTitle {
-        color: #0284c7 !important;                      /* Spójny niebieski kolor */
-        font-size: 11pt !important;
+        color: #0284c7 !important;
+        font-size: 10pt !important;
         font-weight: 700 !important;
         display: flex !important;
         align-items: center !important;
@@ -592,7 +623,7 @@
       .status-title svg,
       .status-title span.icon,
       #statusTitle svg {
-        color: #16a34a !important;                      /* Wyrazista zieleń odhaczenia */
+        color: #16a34a !important;
         stroke: #16a34a !important;
       }
 
@@ -600,24 +631,24 @@
       .status-desc,
       #statusDesc,
       .status-alert p {
-        color: #0f172a !important;                      /* Głęboka czerń/grafit zamiast wyblakłej bieli */
-        font-size: 8.5pt !important;
+        color: #0f172a !important;
+        font-size: 8pt !important;
         font-weight: 500 !important;
-        margin: 4px 0 8px 0 !important;
-        line-height: 1.4 !important;
+        margin: 2px 0 4px 0 !important;
+        line-height: 1.3 !important;
       }
 
       /* Pasek postępu pod opisem */
       .progress-track {
         background: #e2e8f0 !important;
-        height: 6px !important;
+        height: 5px !important;
         border-radius: 3px !important;
         overflow: hidden !important;
       }
 
       .progress-bar,
       #progressBar {
-        background: #0284c7 !important;                  /* Spójny niebieski pasek na wydruku */
+        background: #0284c7 !important;
         height: 100% !important;
       }
 
@@ -633,6 +664,13 @@
         min-width: 0 !important;
         table-layout: fixed !important;
         border-collapse: collapse !important;
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+      }
+
+      tbody, tr {
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
       }
 
       th {
@@ -640,15 +678,15 @@
         color: #334155 !important;
         font-weight: 700 !important;
         font-size: 8pt !important;
-        padding: 6px 4px !important;
+        padding: 4px 3px !important;
         border: 1px solid #cbd5e1 !important;
         text-transform: uppercase;
       }
 
       td {
-        padding: 6px 4px !important;
-        font-size: 8.5pt !important;
-        color: #0f172a !important; /* Wyraźny, ciemny tekst */
+        padding: 4px 3px !important;
+        font-size: 8pt !important;
+        color: #0f172a !important;
         border: 1px solid #cbd5e1 !important;
         text-align: center !important;
       }
@@ -657,13 +695,13 @@
       th:nth-child(1), td:nth-child(1),
       th:nth-child(2), td:nth-child(2) {
         text-align: left !important;
-        padding-left: 8px !important;
+        padding-left: 6px !important;
       }
 
       /* Skorygowany podział szerokości kolumn (łącznie 100%) */
       th:nth-child(1), td:nth-child(1) { width: 13% !important; } /* Kategoria */
       th:nth-child(2), td:nth-child(2) { width: 33% !important; } /* Nazwa przedmiotu */
-      th:nth-child(3), td:nth-child(3) { width: 14% !important; } /* Poprawne odp. (zwiększone z 11%) */
+      th:nth-child(3), td:nth-child(3) { width: 14% !important; } /* Poprawne odp. */
       th:nth-child(4), td:nth-child(4) { width: 10% !important; } /* Ocena test */
       th:nth-child(5), td:nth-child(5) { width: 10% !important; } /* Praca zalicz. */
       th:nth-child(6), td:nth-child(6) { width: 11% !important; } /* Ocena końcowa */
@@ -680,20 +718,19 @@
       }
 
       .score-inputs input {
-        width: 26px !important;       /* Szerokość mieszcząca swobodnie "10" */
+        width: 24px !important;
         min-width: 0 !important;
-        max-width: 28px !important;
+        max-width: 26px !important;
         text-align: center !important;
         padding: 0 !important;
         margin: 0 !important;
         font-weight: 600 !important;
-        font-size: 8.5pt !important;
+        font-size: 8pt !important;
         border: none !important;
         background: transparent !important;
-        -moz-appearance: textfield !important; /* Usunięcie strzałek w Firefox */
+        -moz-appearance: textfield !important;
       }
 
-      /* Usunięcie strzałek góra/dół z Chrome/Edge w druku */
       .score-inputs input::-webkit-outer-spin-button,
       .score-inputs input::-webkit-inner-spin-button {
         -webkit-appearance: none !important;
@@ -703,8 +740,8 @@
       .score-divider {
         color: #64748b !important;
         font-weight: 700 !important;
-        font-size: 8.5pt !important;
-        padding: 0 2px !important;
+        font-size: 8pt !important;
+        padding: 0 1px !important;
       }
 
       /* Wymuszenie czystego tekstu zamiast pól formularza */
@@ -726,7 +763,7 @@
   <div class="header-bar">
     <div class="header-title-group">
       <div class="header-icon" title="Logo TB">
-        <img src="logo-tb.png" alt="Logo TB">
+        <img src="/logo-tb.png" alt="Logo TB" onerror="this.onerror=null; this.style.display='none'; this.parentElement.innerHTML='<span style=\'font-weight:800;font-size:18px;color:#0284c7;letter-spacing:-0.05em;\'>Tb</span>';">
       </div>
       <div>
         <h1>Kalkulator Semestralny ECTS, Ocen i Warunków</h1>
