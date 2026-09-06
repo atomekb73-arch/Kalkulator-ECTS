@@ -424,6 +424,46 @@
       border-radius: 10px;
     }
 
+    .sim-msg-success {
+      color: #059669 !important; /* text-emerald-600 */
+      font-weight: 500;
+    }
+    [data-theme="dark"] .sim-msg-success {
+      color: #34d399 !important; /* dark:text-emerald-400 */
+    }
+
+    .sim-msg-info {
+      color: #0284c7 !important; /* text-sky-600 */
+      font-weight: 500;
+    }
+    [data-theme="dark"] .sim-msg-info {
+      color: #38bdf8 !important; /* dark:text-sky-400 */
+    }
+
+    .sim-msg-warning {
+      color: #d97706 !important; /* text-amber-600 */
+      font-weight: 500;
+    }
+    [data-theme="dark"] .sim-msg-warning {
+      color: #fbbf24 !important; /* dark:text-amber-400 */
+    }
+
+    .sim-msg-error {
+      color: #e11d48 !important; /* text-rose-600 */
+      font-weight: 500;
+    }
+    [data-theme="dark"] .sim-msg-error {
+      color: #fb7185 !important; /* dark:text-rose-400 */
+    }
+
+    .sim-msg-muted {
+      color: #64748b !important;
+      font-weight: 500;
+    }
+    [data-theme="dark"] .sim-msg-muted {
+      color: #94a3b8 !important;
+    }
+
     .simulator-disclaimer {
       margin-top: 12px;
       padding-top: 10px;
@@ -1734,6 +1774,53 @@ function validateSimTarget() {
   }
 }
 
+function getMotivationMessage(requiredGrade, currentAvg, target, remainingEcts) {
+  // Poziom 6: Cel matematycznie niemożliwy
+  if (requiredGrade > 5.0) {
+    return {
+      type: "error",
+      text: "Ten cel jest już matematycznie nieosiągalny w bieżącym okresie (wymagałby średniej powyżej 5.0). Nie trać jednak motywacji — każda dobra ocena z pozostałych " + remainingEcts + " ECTS podnosi Twoją ogólną średnią na dyplomie!"
+    };
+  }
+
+  // Poziomy 1 i 2: Zapas punktowy (wystarczy 3.0)
+  if (requiredGrade <= 3.0) {
+    if (currentAvg !== null && currentAvg >= 4.75) {
+      return {
+        type: "success",
+        text: "Znakomita forma! Matematycznie do celu " + target.toFixed(2) + " wystarczy zaliczenie pozostałych " + remainingEcts + " ECTS na ocenę 3.0, ale zachęcamy do utrzymania równie wysokiego poziomu jak dotychczas!"
+      };
+    } else {
+      return {
+        type: "success",
+        text: "Bezpieczna zaliczka! Do osiągnięcia celu wystarczy ocena 3.0 z pozostałych " + remainingEcts + " ECTS. Powalczenie o wyższe noty zapewni Ci jeszcze lepszą lokatę na liście rankingowej!"
+      };
+    }
+  }
+
+  // Poziom 3: Spokojny zasięg (3.01 - 4.20)
+  if (requiredGrade <= 4.20) {
+    return {
+      type: "info",
+      text: "Cel jest w Twoim zasięgu! Z pozostałych " + remainingEcts + " ECTS wystarczy średnia " + requiredGrade.toFixed(2) + ". Równe, spokojne przygotowanie w zupełności wystarczy."
+    };
+  }
+
+  // Poziom 4: Mobilizacja na ostatniej prostej (4.21 - 4.75)
+  if (requiredGrade <= 4.75) {
+    return {
+      type: "warning",
+      text: "Zobacz, jak niewiele brakuje! Z pozostałych " + remainingEcts + " ECTS potrzebujesz średniej " + requiredGrade.toFixed(2) + ". Mocny finisz w tej sesji otwiera realną szansę na stypendium rektora!"
+    };
+  }
+
+  // Poziom 5: Maksymalna poprzeczka (4.76 - 5.00)
+  return {
+    type: "warning",
+    text: "Ambitne wyzwanie! Osiągnięcie celu wymaga średniej min. " + requiredGrade.toFixed(2) + " z pozostałych " + remainingEcts + " ECTS (niemal samych piątek). Poprzeczka wisi wysoko — pełna mobilizacja!"
+  };
+}
+
 function calculateTarget() {
   validateSimTarget();
   const targetInput = document.getElementById("simTarget");
@@ -1744,8 +1831,8 @@ function calculateTarget() {
   if (!resEl) return;
 
   if (isNaN(remEcts) || remEcts <= 0) {
+    resEl.className = "sim-msg-muted";
     resEl.textContent = "Wszystkie przedmioty w bieżącej puli zostały już rozliczone.";
-    resEl.style.color = "var(--text-muted)";
     return;
   }
 
@@ -1772,25 +1859,9 @@ function calculateTarget() {
   const totalRequiredSum = targetAvg * (currentEcts + remEcts);
   const requiredAvg = (totalRequiredSum - currentSum) / remEcts;
 
-  if (requiredAvg > 5.0) {
-    resEl.textContent = "Cel nieosiągalny (wymagana średnia przekracza 5.00).";
-    resEl.style.color = "var(--danger)";
-  } else if (requiredAvg < 3.0) {
-    if (currAvg !== null) {
-      resEl.textContent = `Masz bardzo bezpieczny zapas punktowy! Przy Twojej obecnej średniej (${currAvg.toFixed(2)}), aby na koniec utrzymać cel ${targetAvg.toFixed(2)}, wystarczy po prostu zaliczyć pozostałe ${remEcts} ECTS na minimalną ocenę pozytywną (3.0).`;
-    } else {
-      resEl.textContent = `Aby osiągnąć cel ${targetAvg.toFixed(2)}, wystarczy po prostu zaliczyć pozostałe ${remEcts} ECTS na minimalną ocenę pozytywną (3.0).`;
-    }
-    resEl.style.color = "var(--success)";
-  } else if (currAvg !== null && requiredAvg < currAvg) {
-    const finalRequired = Math.max(3.0, Math.min(5.0, requiredAvg));
-    resEl.textContent = `Masz zapas punktowy! Przy Twojej obecnej średniej (${currAvg.toFixed(2)}), aby na koniec utrzymać cel ${targetAvg.toFixed(2)}, z pozostałych ${remEcts} ECTS wystarczy uzyskać średnią min. ${finalRequired.toFixed(2)}.`;
-    resEl.style.color = "var(--success)";
-  } else {
-    const finalRequired = Math.max(3.0, Math.min(5.0, requiredAvg));
-    resEl.textContent = `Aby osiągnąć cel ${targetAvg.toFixed(2)}, z pozostałych ${remEcts} ECTS musisz uzyskać średnią min. ${finalRequired.toFixed(2)}.`;
-    resEl.style.color = "var(--primary)";
-  }
+  const motivation = getMotivationMessage(requiredAvg, currAvg, targetAvg, remEcts);
+  resEl.className = "sim-msg-" + motivation.type;
+  resEl.textContent = motivation.text;
 }
 
 // Obsługa localStorage
